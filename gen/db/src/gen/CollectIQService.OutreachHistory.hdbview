@@ -1,0 +1,12 @@
+VIEW CollectIQService_OutreachHistory AS SELECT
+  OutreachHistory_0.createdAt,
+  OutreachHistory_0.createdBy,
+  OutreachHistory_0.modifiedAt,
+  OutreachHistory_0.modifiedBy,
+  OutreachHistory_0.outreachId,
+  OutreachHistory_0.payerId,
+  OutreachHistory_0.stageAtGeneration,
+  OutreachHistory_0.outreachType,
+  OutreachHistory_0.bodyText,
+  OutreachHistory_0.status
+FROM my_collectiq_OutreachHistory AS OutreachHistory_0

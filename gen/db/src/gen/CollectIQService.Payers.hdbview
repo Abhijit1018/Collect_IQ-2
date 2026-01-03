@@ -1,0 +1,14 @@
+VIEW CollectIQService_Payers AS SELECT
+  Payers_0.createdAt,
+  Payers_0.createdBy,
+  Payers_0.modifiedAt,
+  Payers_0.modifiedBy,
+  Payers_0.payerId,
+  Payers_0.payerName,
+  Payers_0.totalPastDue,
+  Payers_0.maxDaysPastDue,
+  Payers_0.stage,
+  Payers_0.lastOutreachStatus,
+  Payers_0.lastOutreachAt,
+  Payers_0.latestOutreachDraft
+FROM my_collectiq_Payers AS Payers_0

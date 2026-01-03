@@ -1,0 +1,13 @@
+COLUMN TABLE my_collectiq_OutreachHistory (
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  outreachId NVARCHAR(36) NOT NULL,
+  payerId NVARCHAR(20),
+  stageAtGeneration NVARCHAR(10),
+  outreachType NVARCHAR(15),
+  bodyText NCLOB,
+  status NVARCHAR(20),
+  PRIMARY KEY(outreachId)
+)

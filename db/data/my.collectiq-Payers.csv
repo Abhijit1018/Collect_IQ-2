@@ -1,0 +1,4 @@
+payerId;payerName;totalPastDue;maxDaysPastDue;stage;lastOutreachStatus
+1001;Reliance Industries;50000.00;4;STAGE_1;NONE
+1002;Tata Motors;120000.00;12;STAGE_2;DRAFT_GENERATED
+1003;Adani Group;85000.00;30;STAGE_3;NONE
