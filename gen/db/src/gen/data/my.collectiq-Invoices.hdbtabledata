@@ -8,11 +8,12 @@
         "file_name": "my.collectiq-Invoices.csv",
         "has_header": true,
         "type_config": {
-          "delimiter": ";"
+          "delimiter": ","
         }
       },
       "import_settings": {
         "import_columns": [
+          "INVOICEID",
           "PAYERID",
           "INVOICENUMBER",
           "INVOICEAMOUNT",
@@ -23,6 +24,7 @@
         "include_filter": []
       },
       "column_mappings": {
+        "INVOICEID": "invoiceId",
         "PAYERID": "payerId",
         "INVOICENUMBER": "invoiceNumber",
         "INVOICEAMOUNT": "invoiceAmount",

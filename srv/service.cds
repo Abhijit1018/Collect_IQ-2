@@ -7,6 +7,7 @@ service CollectIQService {
 
     entity Payers as projection on my.Payers actions {
         action generateOutreach() returns LargeString;
+        action sendOutreach()     returns String; // Ab ye UI ko dikhega
     };
 
     entity Invoices as projection on my.Invoices;

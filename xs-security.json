@@ -1,5 +1,5 @@
 {
-  "xsappname": "collectiq-ab-104", 
+  "xsappname": "collectiq-ab-104",
   "tenant-mode": "dedicated",
   "description": "Security profile of called application",
   "scopes": [],

@@ -3,34 +3,27 @@ namespace my.collectiq;
 using { managed } from '@sap/cds/common';
 
 entity Payers : managed {
-    key payerId          : String(20);
-    payerName            : String(120);
-    totalPastDue         : Decimal(15,2);
-    maxDaysPastDue       : Integer;
-    stage                : String(10); 
-    lastOutreachStatus   : String(30) default 'NONE';
-    lastOutreachAt       : Timestamp;
-    latestOutreachDraft  : LargeString; 
-    
-    invoices             : Association to many Invoices on invoices.payerId = $self.payerId;
-    outreachHistory      : Association to many OutreachHistory on outreachHistory.payerId = $self.payerId;
+    key PayerId            : String(20);
+    PayerName              : String(120);
+    TotalPastDue           : Decimal(15, 2);
+    MaxDaysPastDue         : Integer;
+    Stage                  : String(15);
+    ContactEmail           : String(120);
+    LastOutreachStatus     : String(30);
+    Currency               : String(5);
+    latestOutreachDraft    : String; // Local field for LLM drafts
+    lastOutreachAt         : DateTime; // Local tracking
+    criticality            : Integer;  // For UI coloring
+    Invoices               : Association to many Invoices on Invoices.PayerId = $self.PayerId;
 }
 
 entity Invoices : managed {
-    key invoiceId        : UUID;
-    payerId              : String(20); 
-    invoiceNumber        : String(20);
-    invoiceAmount        : Decimal(15,2);
-    dueDate              : Date;
-    daysPastDue          : Integer;
-    currency             : String(5);
-}
-
-entity OutreachHistory : managed {
-    key outreachId       : UUID;
-    payerId              : String(20);
-    stageAtGeneration    : String(10);
-    outreachType         : String(15); 
-    bodyText             : LargeString;
-    status               : String(20); 
+    key InvoiceId          : UUID;
+    PayerId                : String(20);
+    InvoiceNumber          : String(20);
+    InvoiceAmount          : Decimal(15, 2);
+    DueDate                : Date;
+    DaysPastDue            : Integer;
+    Currency               : String(5);
+    Payer                  : Association to Payers on Payer.PayerId = PayerId;
 }

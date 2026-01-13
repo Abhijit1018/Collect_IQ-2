@@ -1,2 +1,2 @@
-sap.ui.define(["sap/fe/core/AppComponent"],function(e){"use strict";return e.extend("collectiqui.Component",{metadata:{manifest:"json"}})});
+sap.ui.define(["sap/fe/core/AppComponent"],function(t){"use strict";return t.extend("collectiqui.Component",{metadata:{manifest:"json"},init:function(){t.prototype.init.apply(this,arguments)}})});
 //# sourceMappingURL=Component.js.map

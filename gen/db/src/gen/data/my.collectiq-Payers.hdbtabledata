@@ -8,7 +8,7 @@
         "file_name": "my.collectiq-Payers.csv",
         "has_header": true,
         "type_config": {
-          "delimiter": ";"
+          "delimiter": ","
         }
       },
       "import_settings": {

@@ -102,6 +102,10 @@
         <Parameter Name="in" Type="CollectIQService.Payers"/>
         <ReturnType Type="Edm.String"/>
       </Action>
+      <Action Name="sendOutreach" IsBound="true">
+        <Parameter Name="in" Type="CollectIQService.Payers"/>
+        <ReturnType Type="Edm.String"/>
+      </Action>
       <Action Name="syncAR" IsBound="false">
         <ReturnType Type="Edm.String"/>
       </Action>
@@ -131,6 +135,10 @@
         </Annotation>
         <Annotation Term="UI.LineItem">
           <Collection>
+            <Record Type="UI.DataFieldForAction">
+              <PropertyValue Property="Action" String="CollectIQService/syncAR"/>
+              <PropertyValue Property="Label" String="Sync AR Data"/>
+            </Record>
             <Record Type="UI.DataField">
               <PropertyValue Property="Value" Path="payerId"/>
               <PropertyValue Property="Label" String="Payer ID"/>
@@ -156,6 +164,11 @@
               <PropertyValue Property="Label" String="Generate AI Draft"/>
               <PropertyValue Property="InvocationGrouping" EnumMember="UI.OperationGroupingType/Isolated"/>
             </Record>
+            <Record Type="UI.DataFieldForAction">
+              <PropertyValue Property="Action" String="CollectIQService.sendOutreach"/>
+              <PropertyValue Property="Label" String="Send Outreach"/>
+              <PropertyValue Property="InvocationGrouping" EnumMember="UI.OperationGroupingType/Isolated"/>
+            </Record>
           </Collection>
         </Annotation>
         <Annotation Term="UI.HeaderInfo">
@@ -178,8 +191,13 @@
           <Collection>
             <Record Type="UI.ReferenceFacet">
               <PropertyValue Property="ID" String="GeneralInfo"/>
-              <PropertyValue Property="Label" String="General Information"/>
+              <PropertyValue Property="Label" String="Collection Details"/>
               <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#General"/>
+            </Record>
+            <Record Type="UI.ReferenceFacet">
+              <PropertyValue Property="ID" String="AIDraft"/>
+              <PropertyValue Property="Label" String="AI Communication Draft"/>
+              <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#AI"/>
             </Record>
           </Collection>
         </Annotation>
@@ -189,23 +207,31 @@
               <Collection>
                 <Record Type="UI.DataField">
                   <PropertyValue Property="Value" Path="payerId"/>
-                  <PropertyValue Property="Label" String="Payer ID"/>
                 </Record>
                 <Record Type="UI.DataField">
                   <PropertyValue Property="Value" Path="payerName"/>
-                  <PropertyValue Property="Label" String="Customer Name"/>
                 </Record>
                 <Record Type="UI.DataField">
                   <PropertyValue Property="Value" Path="totalPastDue"/>
-                  <PropertyValue Property="Label" String="Total Past Due"/>
                 </Record>
                 <Record Type="UI.DataField">
                   <PropertyValue Property="Value" Path="stage"/>
-                  <PropertyValue Property="Label" String="Risk Stage"/>
                 </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+        <Annotation Term="UI.FieldGroup" Qualifier="AI">
+          <Record Type="UI.FieldGroupType">
+            <PropertyValue Property="Data">
+              <Collection>
                 <Record Type="UI.DataField">
                   <PropertyValue Property="Value" Path="latestOutreachDraft"/>
-                  <PropertyValue Property="Label" String="AI Generated Draft"/>
+                  <PropertyValue Property="Label" String="Gemini AI Draft"/>
+                </Record>
+                <Record Type="UI.DataField">
+                  <PropertyValue Property="Value" Path="lastOutreachAt"/>
+                  <PropertyValue Property="Label" String="Generated At"/>
                 </Record>
               </Collection>
             </PropertyValue>

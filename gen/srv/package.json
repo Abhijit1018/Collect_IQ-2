@@ -27,7 +27,7 @@
     "rimraf": "^5.0.5"
   },
   "scripts": {
-    "start": "cds watch",
+    "start": "cds-serve",
     "build": "rimraf resources mta_archives && mbt build",
     "deploy": "cf deploy mta_archives/collectiq_1.0.0.mtar"
   },
@@ -40,7 +40,7 @@
         "kind": "odata-v4",
         "model": "srv/external/ZUI_COLLECTIQ_04",
         "credentials": {
-          "destination": "eclipsebackend",
+          "destination": "ZUI_COLLECTIQ_04",
           "path": "/sap/opu/odata/sap/ZUI_COLLECTIQ_04"
         }
       },
@@ -49,19 +49,13 @@
           "kind": "hana"
         },
         "auth": "xsuaa"
-      },
-      "html5-repo": true,
-      "destinations": true,
-      "workzone": true
+      }
     }
   },
-  "odata": {
-    "version": "v4"
-  },
   "services": {
-    "CatalogService": {
+    "CollectIQService": {
       "kind": "odata",
-      "path": "/odata/v4/calatog"
+      "path": "/odata/v4/collect-iq"
     }
   },
   "engines": {

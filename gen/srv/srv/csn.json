@@ -396,6 +396,11 @@
       ],
       "@UI.LineItem": [
         {
+          "$Type": "UI.DataFieldForAction",
+          "Action": "CollectIQService/syncAR",
+          "Label": "Sync AR Data"
+        },
+        {
           "$Type": "UI.DataField",
           "Value": {
             "=": "payerId"
@@ -437,6 +442,14 @@
           "InvocationGrouping": {
             "#": "Isolated"
           }
+        },
+        {
+          "$Type": "UI.DataFieldForAction",
+          "Action": "CollectIQService.sendOutreach",
+          "Label": "Send Outreach",
+          "InvocationGrouping": {
+            "#": "Isolated"
+          }
         }
       ],
       "@UI.HeaderInfo.TypeName": "Payer",
@@ -451,8 +464,14 @@
         {
           "$Type": "UI.ReferenceFacet",
           "ID": "GeneralInfo",
-          "Label": "General Information",
+          "Label": "Collection Details",
           "Target": "@UI.FieldGroup#General"
+        },
+        {
+          "$Type": "UI.ReferenceFacet",
+          "ID": "AIDraft",
+          "Label": "AI Communication Draft",
+          "Target": "@UI.FieldGroup#AI"
         }
       ],
       "@UI.FieldGroup#General.$Type": "UI.FieldGroupType",
@@ -460,32 +479,37 @@
         {
           "Value": {
             "=": "payerId"
-          },
-          "Label": "Payer ID"
+          }
         },
         {
           "Value": {
             "=": "payerName"
-          },
-          "Label": "Customer Name"
+          }
         },
         {
           "Value": {
             "=": "totalPastDue"
-          },
-          "Label": "Total Past Due"
+          }
         },
         {
           "Value": {
             "=": "stage"
-          },
-          "Label": "Risk Stage"
-        },
+          }
+        }
+      ],
+      "@UI.FieldGroup#AI.$Type": "UI.FieldGroupType",
+      "@UI.FieldGroup#AI.Data": [
         {
           "Value": {
             "=": "latestOutreachDraft"
           },
-          "Label": "AI Generated Draft"
+          "Label": "Gemini AI Draft"
+        },
+        {
+          "Value": {
+            "=": "lastOutreachAt"
+          },
+          "Label": "Generated At"
         }
       ],
       "projection": {
@@ -632,6 +656,12 @@
           "kind": "action",
           "returns": {
             "type": "cds.LargeString"
+          }
+        },
+        "sendOutreach": {
+          "kind": "action",
+          "returns": {
+            "type": "cds.String"
           }
         }
       }
@@ -2399,18 +2429,6 @@
       }
     }
   },
-  "extensions": [
-    {
-      "annotate": "CollectIQService.CollectIQService",
-      "@UI.Identification": [
-        {
-          "$Type": "UI.DataFieldForAction",
-          "Action": "CollectIQService.syncAR",
-          "Label": "Sync from S/4HANA"
-        }
-      ]
-    }
-  ],
   "meta": {
     "creator": "CDS Compiler v6.6.0",
     "flavor": "inferred"

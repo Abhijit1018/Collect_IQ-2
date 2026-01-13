@@ -10,16 +10,10 @@
 			]
 		},
 		"applicationVersion": {
-			"version": "0.0.1"
+			"version": "1.0.0"
 		},
 		"title": "{{appTitle}}",
 		"description": "{{appDescription}}",
-		"resources": "resources.json",
-		"sourceTemplate": {
-			"id": "@sap/generator-fiori:lrop",
-			"version": "1.20.0",
-			"toolsId": "a12092ca-5aab-454a-8ae3-c39606545301"
-		},
 		"dataSources": {
 			"mainService": {
 				"uri": "/odata/v4/collect-iq/",
@@ -30,29 +24,10 @@
 				}
 			}
 		},
-		"crossNavigation": {
-			"inbounds": {
-				"collectiq_ui-display": {
-					"semanticObject": "collectiq_ui",
-					"action": "display",
-					"signature": {
-						"parameters": {},
-						"additionalParameters": "allowed"
-					}
-				}
-			}
-		}
+		"offline": false
 	},
 	"sap.ui": {
 		"technology": "UI5",
-		"icons": {
-			"icon": "",
-			"favIcon": "",
-			"phone": "",
-			"phone@2": "",
-			"tablet": "",
-			"tablet@2": ""
-		},
 		"deviceTypes": {
 			"desktop": true,
 			"tablet": true,
@@ -66,7 +41,8 @@
 			"libs": {
 				"sap.m": {},
 				"sap.ui.core": {},
-				"sap.fe.templates": {}
+				"sap.fe.templates": {},
+				"sap.ushell": {}
 			}
 		},
 		"contentDensities": {
@@ -91,19 +67,7 @@
 					"autoExpandSelect": true,
 					"earlyRequests": true
 				}
-			},
-			"@i18n": {
-				"type": "sap.ui.model.resource.ResourceModel",
-				"uri": "i18n/i18n.properties",
-				"settings": {
-					"supportedLocales": [
-						""
-					]
-				}
 			}
-		},
-		"resources": {
-			"css": []
 		},
 		"routing": {
 			"config": {},
@@ -134,13 +98,6 @@
 										"route": "PayersObjectPage"
 									}
 								}
-							},
-							"controlConfiguration": {
-								"@com.sap.vocabularies.UI.v1.LineItem": {
-									"tableSettings": {
-										"type": "ResponsiveTable"
-									}
-								}
 							}
 						}
 					}
@@ -159,13 +116,5 @@
 			}
 		},
 		"flexBundle": false
-	},
-	"sap.fiori": {
-		"registrationIds": [],
-		"archeType": "transactional"
-	},
-	"sap.cloud": {
-		"public": true,
-		"service": "collectiq.service"
 	}
 }
