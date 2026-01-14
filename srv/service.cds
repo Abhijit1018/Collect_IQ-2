@@ -1,13 +1,16 @@
 using { my.collectiq as my } from '../db/schema';
-using { ZUI_COLLECTIQ_04 as external } from './external/ZUI_COLLECTIQ_04';
+// 1. Reference the new V4 service correctly
+using { ZUI_COLLECTIQ_V4 as external } from './external/ZUI_COLLECTIQ_V4';
 
 service CollectIQService {
     @readonly
-    entity InvoicesS4 as projection on external.Invoices;
+    // 2. Changed from external.Invoices (plural) to external.Invoice (singular) 
+    // to match your V4 metadata EntitySet name
+    entity InvoicesS4 as projection on external.Invoice;
 
     entity Payers as projection on my.Payers actions {
         action generateOutreach() returns LargeString;
-        action sendOutreach()     returns String; // Ab ye UI ko dikhega
+        action sendOutreach()     returns String;
     };
 
     entity Invoices as projection on my.Invoices;

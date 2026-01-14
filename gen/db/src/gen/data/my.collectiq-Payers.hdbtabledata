@@ -18,7 +18,10 @@
           "TOTALPASTDUE",
           "MAXDAYSPASTDUE",
           "STAGE",
-          "LASTOUTREACHSTATUS"
+          "CRITICALITY",
+          "LASTOUTREACHSTATUS",
+          "CONTACTEMAIL",
+          "LATESTOUTREACHDRAFT"
         ],
         "include_filter": []
       },
@@ -28,7 +31,10 @@
         "TOTALPASTDUE": "totalPastDue",
         "MAXDAYSPASTDUE": "maxDaysPastDue",
         "STAGE": "stage",
-        "LASTOUTREACHSTATUS": "lastOutreachStatus"
+        "CRITICALITY": "criticality",
+        "LASTOUTREACHSTATUS": "lastOutreachStatus",
+        "CONTACTEMAIL": "contactEmail",
+        "LATESTOUTREACHDRAFT": "latestOutreachDraft"
       }
     }
   ]

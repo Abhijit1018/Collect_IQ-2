@@ -3,27 +3,37 @@ namespace my.collectiq;
 using { managed } from '@sap/cds/common';
 
 entity Payers : managed {
-    key PayerId            : String(20);
-    PayerName              : String(120);
-    TotalPastDue           : Decimal(15, 2);
-    MaxDaysPastDue         : Integer;
-    Stage                  : String(15);
-    ContactEmail           : String(120);
-    LastOutreachStatus     : String(30);
-    Currency               : String(5);
-    latestOutreachDraft    : String; // Local field for LLM drafts
-    lastOutreachAt         : DateTime; // Local tracking
-    criticality            : Integer;  // For UI coloring
+    key PayerId            : String(20); // Changed from payerId
+    PayerName              : String(120); // Changed from payerName
+    TotalPastDue           : Decimal(15,2); // Changed from totalPastDue
+    MaxDaysPastDue         : Integer; // Changed from maxDaysPastDue
+    Stage                  : String(15); // Changed from stage
+    ContactEmail           : String(120); // Added from metadata
+    Currency               : String(5); // Added from metadata
+    LastOutreachStatus     : String(30) default 'NONE';
+    lastOutreachAt         : Timestamp; 
+    latestOutreachDraft    : LargeString; 
+    criticality            : Integer; // Local field for UI colors
+    
     Invoices               : Association to many Invoices on Invoices.PayerId = $self.PayerId;
+    outreachHistory        : Association to many OutreachHistory on outreachHistory.PayerId = $self.PayerId;
 }
 
 entity Invoices : managed {
-    key InvoiceId          : UUID;
-    PayerId                : String(20);
-    InvoiceNumber          : String(20);
-    InvoiceAmount          : Decimal(15, 2);
+    key InvoiceId          : UUID; // Changed from invoiceId
+    PayerId                : String(20); // Changed from payerId
+    InvoiceNumber          : String(20); // Changed from invoiceNumber
+    InvoiceAmount          : Decimal(15,2); // Changed from invoiceAmount
     DueDate                : Date;
-    DaysPastDue            : Integer;
+    DaysPastDue            : Integer; // Changed from daysPastDue
     Currency               : String(5);
-    Payer                  : Association to Payers on Payer.PayerId = PayerId;
+}
+
+entity OutreachHistory : managed {
+    key outreachId         : UUID;
+    PayerId                : String(20); // Updated for consistency
+    stageAtGeneration      : String(15);
+    outreachType           : String(15); 
+    bodyText               : LargeString;
+    status                 : String(20); 
 }

@@ -3,11 +3,11 @@ VIEW CollectIQService_Invoices AS SELECT
   Invoices_0.createdBy,
   Invoices_0.modifiedAt,
   Invoices_0.modifiedBy,
-  Invoices_0.invoiceId,
-  Invoices_0.payerId,
-  Invoices_0.invoiceNumber,
-  Invoices_0.invoiceAmount,
-  Invoices_0.dueDate,
-  Invoices_0.daysPastDue,
-  Invoices_0.currency
+  Invoices_0.InvoiceId,
+  Invoices_0.PayerId,
+  Invoices_0.InvoiceNumber,
+  Invoices_0.InvoiceAmount,
+  Invoices_0.DueDate,
+  Invoices_0.DaysPastDue,
+  Invoices_0.Currency
 FROM my_collectiq_Invoices AS Invoices_0

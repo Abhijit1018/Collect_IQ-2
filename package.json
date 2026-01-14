@@ -42,12 +42,21 @@
       "db": {
         "kind": "sql"
       },
-      "ZUI_COLLECTIQ_04": {
+      "ZUI_COLLECTIQ_V4": {
         "kind": "odata-v4",
-        "model": "srv/external/ZUI_COLLECTIQ_04",
-        "credentials": {
-          "destination": "ZUI_COLLECTIQ_04",
-          "path": "/sap/opu/odata/sap/ZUI_COLLECTIQ_04"
+        "model": "srv/external/ZUI_COLLECTIQ_V4",
+        "[hybrid]": {
+          "credentials": {
+            "url": "https://7a456f9d-5fc0-4e0c-b7a7-81e65d431356.abap-web.us10.hana.ondemand.com/sap/opu/odata4/sap/z_ui_collectiq_v4/srvd/sap/z_ui_collectiq/0001",
+            "clientid": "sb-37bc6ed3-65b0-4a0d-a29f-c2b1798336ec!b574927|abap-trial-service-broker!b3132",
+            "clientsecret": "7c4702ed-e05d-4786-b5ec-c42ff834b9d1$RasLFJkJiXPrOUq8B4fzCXpQWxfYnkkmiggh0uNCOYM=",
+            "auth_url": "https://668ca0a1trial.authentication.us10.hana.ondemand.com/oauth/token"
+          }
+        },
+        "[production]": {
+          "credentials": {
+            "destination": "ZUI_COLLECTIQ_V4"
+          }
         }
       },
       "[production]": {
@@ -55,17 +64,7 @@
           "kind": "hana"
         },
         "auth": "xsuaa"
-      },
-      "ZUI_COLLECTIQ_V4": {
-        "kind": "odata",
-        "model": "srv/external/ZUI_COLLECTIQ_V4"
       }
-    }
-  },
-  "services": {
-    "CollectIQService": {
-      "kind": "odata",
-      "path": "/odata/v4/collect-iq"
     }
   }
 }

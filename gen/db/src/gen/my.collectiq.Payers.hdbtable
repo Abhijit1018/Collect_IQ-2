@@ -3,13 +3,16 @@ COLUMN TABLE my_collectiq_Payers (
   createdBy NVARCHAR(255),
   modifiedAt TIMESTAMP,
   modifiedBy NVARCHAR(255),
-  payerId NVARCHAR(20) NOT NULL,
-  payerName NVARCHAR(120),
-  totalPastDue DECIMAL(15, 2),
-  maxDaysPastDue INTEGER,
-  stage NVARCHAR(10),
-  lastOutreachStatus NVARCHAR(30) DEFAULT 'NONE',
+  PayerId NVARCHAR(20) NOT NULL,
+  PayerName NVARCHAR(120),
+  TotalPastDue DECIMAL(15, 2),
+  MaxDaysPastDue INTEGER,
+  Stage NVARCHAR(15),
+  ContactEmail NVARCHAR(120),
+  Currency NVARCHAR(5),
+  LastOutreachStatus NVARCHAR(30) DEFAULT 'NONE',
   lastOutreachAt TIMESTAMP,
   latestOutreachDraft NCLOB,
-  PRIMARY KEY(payerId)
+  criticality INTEGER,
+  PRIMARY KEY(PayerId)
 )

@@ -17,3 +17,5 @@ default-env.json
 # OS Junk
 .DS_Store
 Thumbs.db
+# added by cds
+.cdsrc-private.json

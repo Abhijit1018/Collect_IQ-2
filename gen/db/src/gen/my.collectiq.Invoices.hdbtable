@@ -3,12 +3,12 @@ COLUMN TABLE my_collectiq_Invoices (
   createdBy NVARCHAR(255),
   modifiedAt TIMESTAMP,
   modifiedBy NVARCHAR(255),
-  invoiceId NVARCHAR(36) NOT NULL,
-  payerId NVARCHAR(20),
-  invoiceNumber NVARCHAR(20),
-  invoiceAmount DECIMAL(15, 2),
-  dueDate DATE,
-  daysPastDue INTEGER,
-  currency NVARCHAR(5),
-  PRIMARY KEY(invoiceId)
+  InvoiceId NVARCHAR(36) NOT NULL,
+  PayerId NVARCHAR(20),
+  InvoiceNumber NVARCHAR(20),
+  InvoiceAmount DECIMAL(15, 2),
+  DueDate DATE,
+  DaysPastDue INTEGER,
+  Currency NVARCHAR(5),
+  PRIMARY KEY(InvoiceId)
 )
