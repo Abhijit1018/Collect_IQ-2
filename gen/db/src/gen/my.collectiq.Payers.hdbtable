@@ -9,6 +9,7 @@ COLUMN TABLE my_collectiq_Payers (
   MaxDaysPastDue INTEGER,
   Stage NVARCHAR(15),
   ContactEmail NVARCHAR(120),
+  ContactPhone NVARCHAR(256),
   Currency NVARCHAR(5),
   LastOutreachStatus NVARCHAR(30) DEFAULT 'NONE',
   lastOutreachAt TIMESTAMP,

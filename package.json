@@ -8,9 +8,9 @@
     "@cap-js/hana": "^2",
     "@google/genai": "^1.34.0",
     "@google/generative-ai": "^0.24.1",
-    "@sap-cloud-sdk/connectivity": "^4.2.0",
-    "@sap-cloud-sdk/http-client": "^4.2.0",
-    "@sap-cloud-sdk/resilience": "^4.2.0",
+    "@sap-cloud-sdk/connectivity": "^4.3.1",
+    "@sap-cloud-sdk/http-client": "^4.3.1",
+    "@sap-cloud-sdk/resilience": "^4.3.1",
     "@sap/approuter": "^20.8.7",
     "@sap/audit-logging": "^6.9.0",
     "@sap/cds": "^9.6.1",
@@ -19,8 +19,10 @@
     "@sap/xssec": "^4.12.1",
     "axios": "^1.13.2",
     "body-parser": "^2.2.2",
+    "cron": "^3.5.0",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
+    "ngrok": "^5.0.0-beta.2",
     "nodemailer": "^7.0.12",
     "openai": "^6.16.0",
     "twilio": "^5.11.2"
@@ -40,30 +42,32 @@
   "cds": {
     "requires": {
       "db": {
-        "kind": "sql"
+        "kind": "sql",
+        "[production]": {
+          "kind": "hana"
+        }
+      },
+      "auth": {
+        "[production]": {
+          "kind": "xsuaa"
+        }
       },
       "ZUI_COLLECTIQ_V4": {
-        "kind": "odata-v4",
+        "kind": "odata",
         "model": "srv/external/ZUI_COLLECTIQ_V4",
-        "[hybrid]": {
+        "[development]": {
           "credentials": {
-            "url": "https://7a456f9d-5fc0-4e0c-b7a7-81e65d431356.abap-web.us10.hana.ondemand.com/sap/opu/odata4/sap/z_ui_collectiq_v4/srvd/sap/z_ui_collectiq/0001",
-            "clientid": "sb-37bc6ed3-65b0-4a0d-a29f-c2b1798336ec!b574927|abap-trial-service-broker!b3132",
-            "clientsecret": "7c4702ed-e05d-4786-b5ec-c42ff834b9d1$RasLFJkJiXPrOUq8B4fzCXpQWxfYnkkmiggh0uNCOYM=",
-            "auth_url": "https://668ca0a1trial.authentication.us10.hana.ondemand.com/oauth/token"
+            "url": "https://fa13318e-1cb9-41eb-b81d-1759ca1e28d3.abap.us10.hana.ondemand.com/sap/opu/odata4/sap/zui_collectiq_v4/srvd/sap/zui_collectiq_v4/0001",
+            "authentication": "BasicAuthentication",
+            "username": "riya@vegahteam.com",
+            "password": "Riya@1611"
           }
         },
         "[production]": {
           "credentials": {
-            "destination": "ZUI_COLLECTIQ_V4"
+            "destination": "ZUI_COLLECTIQ_04"
           }
         }
-      },
-      "[production]": {
-        "db": {
-          "kind": "hana"
-        },
-        "auth": "xsuaa"
       }
     }
   }

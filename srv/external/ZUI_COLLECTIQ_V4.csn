@@ -1,90 +1,9 @@
 {
  "meta": {
-  "creator": "cds-dk 9.6.0"
+  "creator": "cds-dk 9.5.0"
  },
  "$version": "2.0",
  "definitions": {
-  "ZUI_COLLECTIQ_V4.PayerCbAControl": {
-   "kind": "type",
-   "@cds.external": true,
-   "elements": {
-    "_Invoices": {
-     "type": "cds.Boolean",
-     "notNull": true,
-     "@Common.Label": "Dynamic CbA-Control",
-     "@Common.Heading": "Dynamic Create by Association Control",
-     "@Common.QuickInfo": "Dynamic Create via Association Control Property"
-    }
-   }
-  },
-  "ZUI_COLLECTIQ_V4.PayerOperationControl": {
-   "kind": "type",
-   "@cds.external": true,
-   "elements": {
-    "generateOutreach": {
-     "type": "cds.Boolean",
-     "notNull": true,
-     "@Common.Label": "Dyn. Action Control",
-     "@Common.Heading": "Dynamic Action Control",
-     "@Common.QuickInfo": "Dynamic Action Property"
-    }
-   }
-  },
-  "ZUI_COLLECTIQ_V4.EntityControl": {
-   "kind": "type",
-   "@cds.external": true,
-   "elements": {
-    "Deletable": {
-     "type": "cds.Boolean",
-     "notNull": true,
-     "@Common.Label": "Dyn. Method Control",
-     "@Common.Heading": "Dynamic Method Control",
-     "@Common.QuickInfo": "Dynamic Method Property"
-    },
-    "Updatable": {
-     "type": "cds.Boolean",
-     "notNull": true,
-     "@Common.Label": "Dyn. Method Control",
-     "@Common.Heading": "Dynamic Method Control",
-     "@Common.QuickInfo": "Dynamic Method Property"
-    }
-   }
-  },
-  "ZUI_COLLECTIQ_V4.SAP__Message": {
-   "kind": "type",
-   "@cds.external": true,
-   "elements": {
-    "code": {
-     "type": "cds.String",
-     "notNull": true
-    },
-    "message": {
-     "type": "cds.String",
-     "notNull": true
-    },
-    "target": {
-     "type": "cds.String"
-    },
-    "additionalTargets": {
-     "items": {
-      "type": "cds.String",
-      "notNull": true
-     }
-    },
-    "transition": {
-     "type": "cds.Boolean",
-     "notNull": true
-    },
-    "numericSeverity": {
-     "type": "cds.Integer",
-     "@odata.Type": "Edm.Byte",
-     "notNull": true
-    },
-    "longtextUrl": {
-     "type": "cds.String"
-    }
-   }
-  },
   "ZUI_COLLECTIQ_V4": {
    "kind": "service",
    "@cds.external": true,
@@ -142,24 +61,18 @@
      "key": true,
      "type": "cds.UUID",
      "notNull": true,
-     "@Core.ComputedDefaultValue": true,
      "@Common.Label": "UUID",
      "@Common.QuickInfo": "16 Byte UUID in 16 Bytes (Raw Format)"
     },
     "PayerId": {
      "type": "cds.String",
      "length": 20,
-     "notNull": true,
-     "@Core.Computed": true,
-     "@Common.Label": "column id",
-     "@Common.QuickInfo": "invoice id"
+     "notNull": true
     },
     "InvoiceNumber": {
      "type": "cds.String",
      "length": 20,
-     "notNull": true,
-     "@Common.Label": "column id",
-     "@Common.QuickInfo": "invoice id"
+     "notNull": true
     },
     "InvoiceAmount": {
      "type": "cds.Decimal",
@@ -167,109 +80,31 @@
      "notNull": true,
      "@Measures.ISOCurrency": {
       "=": "Currency"
-     },
-     "@Common.Label": "amount"
+     }
     },
     "DueDate": {
-     "type": "cds.Date",
-     "@Common.Label": "Created On",
-     "@Common.QuickInfo": "Creation Date",
-     "@Common.DocumentationRef": "urn:sap-com:documentation:key?=type=DE&id=ABP_CREATION_DATE"
+     "type": "cds.Date"
     },
     "DaysPastDue": {
      "type": "cds.Integer",
-     "notNull": true,
-     "@Common.Label": "INT4",
-     "@Common.QuickInfo": "4 Byte Signed Integer"
+     "notNull": true
     },
     "Currency": {
      "type": "cds.String",
      "length": 5,
      "notNull": true,
-     "@Common.IsCurrency": true,
-     "@Common.Label": "currency",
-     "@Common.QuickInfo": "currency code"
-    },
-    "__EntityControl": {
-     "type": "ZUI_COLLECTIQ_V4.EntityControl",
-     "@Core.Computed": true,
-     "@UI.HiddenFilter": true,
-     "@UI.Hidden": true
-    },
-    "SAP__Messages": {
-     "items": {
-      "type": "ZUI_COLLECTIQ_V4.SAP__Message",
-      "notNull": true
-     }
+     "@Common.IsCurrency": true
     },
     "_Payer": {
      "type": "cds.Association",
      "target": "ZUI_COLLECTIQ_V4.Payer",
      "cardinality": {
       "max": 1
-     }
+     },
+     "keys": []
     }
    },
-   "@Common.Label": "Invoice Data for CollectIQ",
-   "@UI.Facets": [
-    {
-     "$Type": "SAP__UI.ReferenceFacet",
-     "Label": "Invoice Info",
-     "ID": "InvoiceData",
-     "Target": {
-      "=": "@UI.Identification"
-     }
-    }
-   ],
-   "@UI.Identification": [
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "InvoiceNumber"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "InvoiceAmount"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "DueDate"
-     }
-    }
-   ],
-   "@UI.LineItem": [
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "InvoiceNumber"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "InvoiceAmount"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "DueDate"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "DaysPastDue"
-     }
-    }
-   ],
-   "@Common.Messages": {
-    "=": "SAP__Messages"
-   },
+   "@Common.Label": "Invoice View Entity",
    "@Capabilities.NavigationRestrictions.RestrictedProperties": [
     {
      "NavigationProperty": {
@@ -277,32 +112,108 @@
      },
      "InsertRestrictions": {
       "Insertable": false
-     },
-     "DeepUpdateSupport": {
-      "Supported": false
      }
     }
    ],
    "@Capabilities.SearchRestrictions.Searchable": false,
-   "@Capabilities.FilterRestrictions.NonFilterableProperties": [
-    "__EntityControl"
-   ],
-   "@Capabilities.SortRestrictions.NonSortableProperties": [
-    "__EntityControl"
-   ],
-   "@Capabilities.UpdateRestrictions.DeltaUpdateSupported": true,
-   "@Capabilities.UpdateRestrictions.Updatable": {
-    "=": "__EntityControl/Updatable"
-   },
+   "@Capabilities.InsertRestrictions.Insertable": false,
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
    "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
     "_Payer"
    ],
    "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true,
-   "@Capabilities.DeepUpdateSupport.ContentIDSupported": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "InvoiceAmount"
+     },
+     "AllowedExpressions": "MultiValue"
+    }
+   ]
+  },
+  "ZUI_COLLECTIQ_V4.OutreachHistory": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OutreachId": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true,
+     "@Common.Label": "UUID",
+     "@Common.QuickInfo": "16 Byte UUID in 16 Bytes (Raw Format)"
+    },
+    "PayerId": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "StageAtGeneration": {
+     "type": "cds.String",
+     "length": 15,
+     "notNull": true
+    },
+    "OutreachType": {
+     "type": "cds.String",
+     "length": 15,
+     "notNull": true
+    },
+    "BodyText": {
+     "type": "cds.String",
+     "notNull": true
+    },
+    "Status": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "CreatedAt": {
+     "type": "cds.Decimal",
+     "precision": 21,
+     "scale": 7,
+     "notNull": true
+    },
+    "_Payer": {
+     "type": "cds.Association",
+     "target": "ZUI_COLLECTIQ_V4.Payer",
+     "cardinality": {
+      "max": 1
+     },
+     "keys": []
+    }
+   },
+   "@Common.Label": "Outreach History View Entity",
+   "@Capabilities.NavigationRestrictions.RestrictedProperties": [
+    {
+     "NavigationProperty": {
+      "=": "_Payer"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
+     }
+    }
+   ],
+   "@Capabilities.SearchRestrictions.Searchable": false,
+   "@Capabilities.FilterRestrictions.Filterable": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "BodyText"
+     },
+     "AllowedExpressions": "SearchExpression"
+    }
+   ],
+   "@Capabilities.SortRestrictions.NonSortableProperties": [
+    "BodyText"
+   ],
    "@Capabilities.InsertRestrictions.Insertable": false,
-   "@Capabilities.DeleteRestrictions.Deletable": {
-    "=": "__EntityControl/Deletable"
-   }
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
+   "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
+    "_Payer"
+   ],
+   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true
   },
   "ZUI_COLLECTIQ_V4.Payer": {
    "kind": "entity",
@@ -313,17 +224,12 @@
      "key": true,
      "type": "cds.String",
      "length": 20,
-     "notNull": true,
-     "@Core.ComputedDefaultValue": true,
-     "@Common.Label": "column id",
-     "@Common.QuickInfo": "invoice id"
+     "notNull": true
     },
     "PayerName": {
      "type": "cds.String",
      "length": 120,
-     "notNull": true,
-     "@Common.Label": "name",
-     "@Common.QuickInfo": "comapny name"
+     "notNull": true
     },
     "TotalPastDue": {
      "type": "cds.Decimal",
@@ -331,65 +237,51 @@
      "notNull": true,
      "@Measures.ISOCurrency": {
       "=": "Currency"
-     },
-     "@Common.Label": "amount"
+     }
     },
     "MaxDaysPastDue": {
      "type": "cds.Integer",
-     "notNull": true,
-     "@Common.Label": "INT4",
-     "@Common.QuickInfo": "4 Byte Signed Integer"
+     "notNull": true
     },
     "Stage": {
      "type": "cds.String",
      "length": 15,
-     "notNull": true,
-     "@Common.Label": "stage"
+     "notNull": true
     },
     "ContactEmail": {
      "type": "cds.String",
      "length": 120,
-     "notNull": true,
-     "@Common.Label": "name",
-     "@Common.QuickInfo": "comapny name"
+     "notNull": true
     },
-    "LastOutreachStatus": {
+    "ContactPhone": {
      "type": "cds.String",
-     "length": 30,
-     "notNull": true,
-     "@Common.Label": "status"
+     "length": 256,
+     "notNull": true
     },
     "Currency": {
      "type": "cds.String",
      "length": 5,
      "notNull": true,
-     "@Common.IsCurrency": true,
-     "@Common.Label": "currency",
-     "@Common.QuickInfo": "currency code"
+     "@Common.IsCurrency": true
     },
-    "__CreateByAssociationControl": {
-     "type": "ZUI_COLLECTIQ_V4.PayerCbAControl",
-     "@Core.Computed": true,
-     "@UI.HiddenFilter": true,
-     "@UI.Hidden": true
+    "LastOutreachStatus": {
+     "type": "cds.String",
+     "length": 30,
+     "notNull": true
     },
-    "__EntityControl": {
-     "type": "ZUI_COLLECTIQ_V4.EntityControl",
-     "@Core.Computed": true,
-     "@UI.HiddenFilter": true,
-     "@UI.Hidden": true
+    "LastOutreachAt": {
+     "type": "cds.Decimal",
+     "precision": 21,
+     "scale": 7,
+     "notNull": true
     },
-    "__OperationControl": {
-     "type": "ZUI_COLLECTIQ_V4.PayerOperationControl",
-     "@Core.Computed": true,
-     "@UI.HiddenFilter": true,
-     "@UI.Hidden": true
+    "LatestOutreachDraft": {
+     "type": "cds.String",
+     "notNull": true
     },
-    "SAP__Messages": {
-     "items": {
-      "type": "ZUI_COLLECTIQ_V4.SAP__Message",
-      "notNull": true
-     }
+    "Criticality": {
+     "type": "cds.Integer",
+     "notNull": true
     },
     "_Invoices": {
      "type": "cds.Composition",
@@ -412,167 +304,70 @@
       }
      ],
      "@Common.Composition": true
-    }
-   },
-   "actions": {
-    "generateOutreach": {
-     "kind": "action",
-     "params": {},
-     "returns": {
-      "type": "ZUI_COLLECTIQ_V4.Payer",
-      "notNull": true
+    },
+    "_OutreachHistory": {
+     "type": "cds.Composition",
+     "target": "ZUI_COLLECTIQ_V4.OutreachHistory",
+     "cardinality": {
+      "max": "*"
      },
-     "@Core.OperationAvailable": {
-      "=": "_it/__OperationControl/generateOutreach"
-     }
+     "on": [
+      {
+       "ref": [
+        "_OutreachHistory",
+        "_Payer"
+       ]
+      },
+      "=",
+      {
+       "ref": [
+        "$self"
+       ]
+      }
+     ],
+     "@Common.Composition": true
     }
    },
-   "@Common.Label": "Payer Data for CollectIQ",
-   "@UI.DataPoint#TotalDue.Value": {
-    "=": "TotalPastDue"
-   },
-   "@UI.DataPoint#TotalDue.Title": "Total Past Due",
-   "@UI.Facets": [
-    {
-     "$Type": "SAP__UI.CollectionFacet",
-     "Label": "Payer Details",
-     "ID": "GeneralInfo",
-     "Facets": []
-    },
-    {
-     "$Type": "SAP__UI.ReferenceFacet",
-     "Label": "Invoices",
-     "ID": "Invoices",
-     "Target": {
-      "=": "_Invoices.@UI.LineItem"
-     }
-    },
-    {
-     "$Type": "SAP__UI.ReferenceFacet",
-     "Label": "Outreach Content",
-     "ID": "Outreach",
-     "Target": {
-      "=": "@UI.Identification"
-     }
-    }
-   ],
-   "@UI.HeaderInfo.TypeName": "Payer",
-   "@UI.HeaderInfo.TypeNamePlural": "Payers",
-   "@UI.HeaderInfo.Title.$Type": "SAP__UI.DataField",
-   "@UI.HeaderInfo.Title.Value": {
-    "=": "PayerName"
-   },
-   "@UI.Identification": [
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "PayerName"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "TotalPastDue"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "ContactEmail"
-     }
-    }
-   ],
-   "@UI.LineItem": [
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "PayerId"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "PayerName"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "TotalPastDue"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "MaxDaysPastDue"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Criticality": {
-      "=": "MaxDaysPastDue"
-     },
-     "Value": {
-      "=": "Stage"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataField",
-     "Value": {
-      "=": "LastOutreachStatus"
-     }
-    },
-    {
-     "$Type": "SAP__UI.DataFieldForAction",
-     "Label": "Generate Outreach",
-     "Action": "ZUI_COLLECTIQ_V4.generateOutreach(ZUI_COLLECTIQ_V4.PayerType)",
-     "InvocationGrouping": {
-      "#": "Isolated"
-     }
-    }
-   ],
-   "@UI.SelectionFields": [
-    "PayerId",
-    "Stage"
-   ],
-   "@Common.Messages": {
-    "=": "SAP__Messages"
-   },
+   "@Common.Label": "Payer View Entity",
    "@Capabilities.NavigationRestrictions.RestrictedProperties": [
     {
      "NavigationProperty": {
       "=": "_Invoices"
      },
      "InsertRestrictions": {
-      "Insertable": {
-       "=": "__CreateByAssociationControl/_Invoices"
-      }
+      "Insertable": false
+     }
+    },
+    {
+     "NavigationProperty": {
+      "=": "_OutreachHistory"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
      }
     }
    ],
    "@Capabilities.SearchRestrictions.Searchable": false,
-   "@Capabilities.FilterRestrictions.NonFilterableProperties": [
-    "__CreateByAssociationControl",
-    "__EntityControl",
-    "__OperationControl"
+   "@Capabilities.FilterRestrictions.Filterable": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "LatestOutreachDraft"
+     },
+     "AllowedExpressions": "SearchExpression"
+    }
    ],
    "@Capabilities.SortRestrictions.NonSortableProperties": [
-    "__CreateByAssociationControl",
-    "__EntityControl",
-    "__OperationControl"
+    "LatestOutreachDraft"
    ],
-   "@Capabilities.UpdateRestrictions.DeltaUpdateSupported": true,
-   "@Capabilities.UpdateRestrictions.Updatable": {
-    "=": "__EntityControl/Updatable"
-   },
+   "@Capabilities.InsertRestrictions.Insertable": false,
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
    "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
-    "_Invoices"
+    "_Invoices",
+    "_OutreachHistory"
    ],
-   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true,
-   "@Capabilities.DeepUpdateSupport.ContentIDSupported": true,
-   "@Capabilities.DeleteRestrictions.Deletable": {
-    "=": "__EntityControl/Deletable"
-   }
+   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true
   }
  }
 }

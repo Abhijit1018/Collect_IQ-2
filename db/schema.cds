@@ -9,6 +9,7 @@ entity Payers : managed {
     MaxDaysPastDue         : Integer; // Changed from maxDaysPastDue
     Stage                  : String(15); // Changed from stage
     ContactEmail           : String(120); // Added from metadata
+    ContactPhone           : String(256); // <--- Yeh field add kari thi
     Currency               : String(5); // Added from metadata
     LastOutreachStatus     : String(30) default 'NONE';
     lastOutreachAt         : Timestamp; 

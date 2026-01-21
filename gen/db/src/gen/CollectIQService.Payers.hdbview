@@ -9,6 +9,7 @@ VIEW CollectIQService_Payers AS SELECT
   Payers_0.MaxDaysPastDue,
   Payers_0.Stage,
   Payers_0.ContactEmail,
+  Payers_0.ContactPhone,
   Payers_0.Currency,
   Payers_0.LastOutreachStatus,
   Payers_0.lastOutreachAt,

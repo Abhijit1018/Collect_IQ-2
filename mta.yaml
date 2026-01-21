@@ -125,7 +125,7 @@ resources:
       service-plan: application
       path: ./xs-security.json
       config:
-        xsappname: collectiq-${org}-${space}
+        xsappname: collectiq-ab-104 # Corrected to match your xs-security.json
         tenant-mode: dedicated
         oauth2-configuration:
           redirect-uris:
@@ -157,6 +157,12 @@ resources:
                 ProxyType: Internet
                 HTML5.ForwardAuthToken: true
                 HTML5.DynamicDestination: true
+              # LOGIC: Matches image_c90f8c.png and Colleague advice
+              - Name: ZUI_COLLECTIQ_04
+                URL: https://fa13318e-1cb9-41eb-b81d-1759ca1e28d3.abap.us10.hana.ondemand.com
+                Type: HTTP
+                ProxyType: Internet
+                Authentication: OAuth2ClientCredentials
     requires:
       - name: srv-api
         group: destinations

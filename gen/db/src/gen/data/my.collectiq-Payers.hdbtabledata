@@ -21,20 +21,22 @@
           "CRITICALITY",
           "LASTOUTREACHSTATUS",
           "CONTACTEMAIL",
-          "LATESTOUTREACHDRAFT"
+          "CONTACTPHONE",
+          "CURRENCY"
         ],
         "include_filter": []
       },
       "column_mappings": {
-        "PAYERID": "payerId",
-        "PAYERNAME": "payerName",
-        "TOTALPASTDUE": "totalPastDue",
-        "MAXDAYSPASTDUE": "maxDaysPastDue",
-        "STAGE": "stage",
+        "PAYERID": "PayerId",
+        "PAYERNAME": "PayerName",
+        "TOTALPASTDUE": "TotalPastDue",
+        "MAXDAYSPASTDUE": "MaxDaysPastDue",
+        "STAGE": "Stage",
         "CRITICALITY": "criticality",
-        "LASTOUTREACHSTATUS": "lastOutreachStatus",
-        "CONTACTEMAIL": "contactEmail",
-        "LATESTOUTREACHDRAFT": "latestOutreachDraft"
+        "LASTOUTREACHSTATUS": "LastOutreachStatus",
+        "CONTACTEMAIL": "ContactEmail",
+        "CONTACTPHONE": "ContactPhone",
+        "CURRENCY": "Currency"
       }
     }
   ]

@@ -1,4 +1,4 @@
-payerId,payerName,totalPastDue,maxDaysPastDue,stage,criticality,lastOutreachStatus,contactEmail,latestOutreachDraft
-1001,Reliance Industries,50000.00,4,STAGE_1,3,NONE,finance.dept@reliance.com,"Dear Reliance Industries, this is a gentle reminder regarding your outstanding balance of 50,000.00 INR."
-1002,Tata Motors,120000.00,8,STAGE_2,2,DRAFT_GENERATED,ar.team@tatamotors.com,"URGENT: Tata Motors, your balance of 120,000.00 INR is now 8 days overdue. Please process payment immediately."
-1003,Adani Group,85000.00,30,STAGE_3,1,NONE,collections@adani.com,"[CALL SCRIPT] Hello, this is Vegah CollectIQ calling for Adani Group regarding the 85,000.00 INR past due balance."
+PayerId,PayerName,TotalPastDue,MaxDaysPastDue,Stage,criticality,LastOutreachStatus,ContactEmail,ContactPhone,Currency
+1001,Reliance Industries,50000.00,4,STAGE_1,3,NONE,gaurriya1611@gmail.com,+919265218188,INR
+1002,Tata Motors,120000.00,8,STAGE_2,2,NONE,abhijeetrathore104@gmail.com,+919376481607,INR
+1003,Adani Group,85000.00,30,STAGE_3,1,NONE,riyagaur1625@gmail.com,+919974863295,INR
