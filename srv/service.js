@@ -3,6 +3,8 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 const { CronJob } = require('cron');
+const expressWs = require('express-ws');
+const WebSocket = require('ws');
 const stage1Template = require('./templates/stage1');
 const stage2Template = require('./templates/stage2');
 const stage3Template = require('./templates/stage3');
@@ -15,8 +17,8 @@ module.exports = cds.service.impl(async function () {
   // 1. Setup Real Email Transporter (SECURE PORTAL EMAILS INTACT)
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: true,
+    port: process.env.EMAIL_PORT || 587,
+    secure: false, // true for 465, false for 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -151,7 +153,7 @@ module.exports = cds.service.impl(async function () {
 
   // --- A. CRON SCHEDULER WITH VERBOSE DIAGNOSTICS ---
   const job = new CronJob(
-    '*/200 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
+    '*/1 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
     async () => {
       try {
         console.log('>>> [SCHEDULER] ====== STARTING SCHEDULER CYCLE ======');
@@ -287,6 +289,9 @@ module.exports = cds.service.impl(async function () {
   const bodyParser = require('body-parser');
   app.use(bodyParser.urlencoded({ extended: false }));
 
+  // Initialize express-ws for WebSocket support
+  expressWs(app);
+
   console.log('>>> [ROUTES] Registering webhook routes...');
 
   // INITIAL VOICE PROMPT (Watermark)
@@ -322,18 +327,15 @@ module.exports = cds.service.impl(async function () {
       console.log(`>>> [VOICE] Payer: ${payer.PayerName}, NGROK_URL: ${ngrokUrl}`);
 
       const twiml = new (require('twilio').twiml.VoiceResponse)();
-      const gather = twiml.gather({
-        numDigits: 1,
-        action: `${ngrokUrl}/collect-iq/handle-reminder?payerId=${payerId}`,
-        method: 'POST',
-        timeout: 10,
+      
+      // Connect to WebSocket media stream for real-time audio handling
+      const mediaStream = twiml.connect();
+      mediaStream.stream({
+        url: `wss://${req.get('host')}/collect-iq/media-stream?payerId=${payerId}`,
       });
 
-      gather.say({ voice: 'alice' }, 'Hello, this is Vegah CollectIQ. Press 1 to confirm and hear your payment details.');
-      twiml.say({ voice: 'alice' }, 'We did not receive any input. Goodbye.');
-
       const response = twiml.toString();
-      console.log(`>>> [VOICE] Sending TwiML response`);
+      console.log(`>>> [VOICE] Sending TwiML response with media stream`);
       console.log(`>>> [VOICE] Response length: ${response.length} bytes`);
 
       res.type('text/xml');
@@ -491,6 +493,390 @@ module.exports = cds.service.impl(async function () {
   app.get('/test-route', (req, res) => {
     console.log('>>> TEST ROUTE HIT');
     res.send('Test route works! Routes are registering correctly.');
+  });
+
+  // ========== TWILIO MEDIA STREAM + OPENAI REALTIME API ==========
+  // Real-time voice conversation powered by OpenAI
+  app.ws('/collect-iq/media-stream', (ws, req) => {
+    console.log(`\n>>> [MEDIA-STREAM] ========== TWILIO WEBSOCKET CONNECTED ==========`);
+    console.log(`>>> [MEDIA-STREAM] Query:`, req.query);
+
+    let streamSid = null;
+    let callSid = null;
+    let payerId = req.query.payerId || null;
+    let openaiWs = null;
+    let openaiConnecting = null;
+    const openaiQueue = [];
+    let payer = null;
+
+    // Fetch payer details once and cache so prompts always include name/amount
+    const loadPayer = async () => {
+      if (payer) return payer;
+      if (!payerId) return null;
+      try {
+        const db = await cds.connect.to('db');
+        payer = await db.run(SELECT.one.from('my.collectiq.Payers').where({ PayerId: payerId }));
+        console.log(`>>> [MEDIA-STREAM] Loaded payer for AI prompt: ${payer?.PayerName || 'N/A'}`);
+      } catch (err) {
+        console.error(`>>> [MEDIA-STREAM] Failed loading payer:`, err.message);
+      }
+      return payer;
+    };
+
+    // Helper to safely send to Twilio WS
+    const safeSendToTwilio = (payload) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        console.warn('>>> [TWILIO] Skip send: WS not OPEN');
+        return false;
+      }
+      try {
+        ws.send(JSON.stringify(payload));
+        return true;
+      } catch (err) {
+        console.warn('>>> [TWILIO] Send failed:', err.message);
+        return false;
+      }
+    };
+
+    // Helper to send/queue to OpenAI until socket is OPEN
+    const safeSendToOpenAI = (payload) => {
+      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+        openaiWs.send(JSON.stringify(payload));
+        return true;
+      }
+      // queue and will flush on open
+      openaiQueue.push(payload);
+      return false;
+    };
+
+    // ===== OPENAI REALTIME CONNECTION =====
+    const connectToOpenAI = async () => {
+      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) return;
+      if (openaiConnecting) return openaiConnecting;
+
+      openaiConnecting = new Promise((resolve, reject) => {
+        const openaiUrl = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17';
+        const authHeader = `Bearer ${process.env.OPENAI_API_KEY}`;
+
+        console.log(`>>> [OPENAI] Connecting to OpenAI Realtime API...`);
+        
+        openaiWs = new WebSocket(openaiUrl, {
+          headers: {
+            'Authorization': authHeader,
+            'OpenAI-Beta': 'realtime=v1'
+          }
+        });
+
+        openaiWs.on('open', async () => {
+          console.log(`>>> [OPENAI] ✓ Connected to OpenAI Realtime API`);
+          // flush queued messages
+          while (openaiQueue.length && openaiWs.readyState === WebSocket.OPEN) {
+            const msg = openaiQueue.shift();
+            openaiWs.send(JSON.stringify(msg));
+          }
+          
+          // Ensure payer data is present before configuring the session so the model can speak the name/amount
+          await loadPayer();
+
+          const payerName = payer?.PayerName || 'the customer';
+          const amountText = payer?.TotalPastDue
+            ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
+            : 'the outstanding balance';
+          const voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
+
+          // Send session configuration to OpenAI
+          const sessionConfig = {
+            type: 'session.update',
+            session: {
+              model: 'gpt-4o-realtime-preview-2024-12-17',
+              modalities: ['text', 'audio'],
+              instructions: `You are a professional collections agent for Vegah CollectIQ.
+
+Always say the payer name (${payerName}) and the overdue amount (${amountText}) clearly in the first sentence. Keep responses under 2 sentences unless clarifying. Stay empathetic but firm and end with a specific next step.
+
+Call Details:
+- Customer: ${payerName}
+- Amount: ${amountText}
+- Status: ${payer?.LastOutreachStatus || 'unknown'}`,
+              voice: 'alloy',
+              temperature: 0.7,
+              max_response_output_tokens: 1024,
+              input_audio_format: 'g711_ulaw',
+              output_audio_format: 'g711_ulaw'
+            }
+          };
+          safeSendToOpenAI(sessionConfig);
+          console.log(`>>> [OPENAI] Session configured`);
+          resolve();
+        });
+
+        openaiWs.on('error', (error) => {
+          console.error(`>>> [OPENAI] Connection Error:`, error.message);
+          reject(error);
+        });
+
+        openaiWs.on('close', () => {
+          console.log(`>>> [OPENAI] Connection closed`);
+          openaiConnecting = null;
+          openaiWs = null;
+        });
+
+        // Handle messages from OpenAI
+        openaiWs.on('message', (data) => {
+          try {
+            const message = JSON.parse(data.toString());
+            console.log(`>>> [OPENAI] Event: ${message.type}`);
+            
+            switch (message.type) {
+              case 'response.audio.delta':
+                // Audio response from OpenAI - send to Twilio
+                if (!message.delta) break;
+                if (ws.readyState !== WebSocket.OPEN) {
+                  console.warn('>>> [OPENAI] Dropping audio delta because Twilio WS not open');
+                  break;
+                }
+                if (!streamSid) {
+                  console.warn('>>> [OPENAI] Dropping audio delta because streamSid not set');
+                  break;
+                }
+                console.log(`>>> [OPENAI] Audio delta (${message.delta.length} bytes base64)`);
+                // message.delta is already base64-encoded g711_ulaw audio; forward directly to Twilio
+                safeSendToTwilio({
+                  event: 'media',
+                  streamSid: streamSid,
+                  media: { payload: message.delta }
+                });
+                break;
+
+              case 'response.text.delta':
+                console.log(`>>> [OPENAI] AI Response: ${message.delta}`);
+                break;
+
+              case 'response.done':
+                console.log(`>>> [OPENAI] Response completed`);
+                break;
+
+              case 'error':
+                console.error(`>>> [OPENAI] Error:`, message.error);
+                break;
+
+              default:
+                // Silently ignore other message types
+                break;
+            }
+          } catch (err) {
+            console.error(`>>> [OPENAI] Message parse error:`, err.message);
+          }
+        });
+      });
+
+      return openaiConnecting.finally(() => {
+        openaiConnecting = null;
+      });
+    };
+
+    // Preload payer info so we can prompt immediately even if Twilio skips "connected"
+    (async () => {
+      try {
+        if (payerId) {
+          const db = await cds.connect.to('db');
+          payer = await db.run(SELECT.one.from('my.collectiq.Payers').where({ PayerId: payerId }));
+          console.log(`>>> [MEDIA-STREAM] Preloaded payer: ${payer?.PayerName || 'N/A'}`);
+        }
+      } catch (err) {
+        console.error(`>>> [MEDIA-STREAM] Error preloading payer:`, err.message);
+      }
+    })();
+
+    // ===== TWILIO CONNECTION HANDLER =====
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message);
+        const event = data.event;
+
+        console.log(`>>> [TWILIO] Event: ${event}`);
+
+        switch (event) {
+          case 'connected':
+            console.log(`>>> [TWILIO] Connected event received`);
+            console.log(`>>> [TWILIO] Stream SID: ${data.streamSid}`);
+            streamSid = data.streamSid;
+            callSid = data.callSid;
+            payerId = req.query.payerId || payerId;
+            console.log(`>>> [TWILIO] PayerId: ${payerId}`);
+
+            await loadPayer();
+            let payerName = payer?.PayerName || 'the customer';
+            let amountText = payer?.TotalPastDue
+              ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
+              : 'the outstanding balance';
+            let voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
+
+            // Connect to OpenAI (idempotent safeguard)
+            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+              try {
+                await connectToOpenAI();
+                console.log(`>>> [TWILIO] OpenAI connection established (connected event)`);
+                // Kick off conversation
+                const initialGreeting = {
+                  type: 'response.create',
+                  response: {
+                    modalities: ['audio', 'text'],
+                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
+                  }
+                };
+                safeSendToOpenAI(initialGreeting);
+                const startText = {
+                  type: 'input_text',
+                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
+                };
+                safeSendToOpenAI(startText);
+              } catch (err) {
+                console.error(`>>> [TWILIO] Failed to connect to OpenAI:`, err.message);
+                ws.send(JSON.stringify({
+                  event: 'media',
+                  streamSid: streamSid,
+                  media: { payload: 'QVVEJg==' }
+                }));
+              }
+            }
+            break;
+
+          case 'start':
+            console.log(`>>> [TWILIO] Media stream started`);
+            console.log(`>>> [TWILIO] Media Format:`, data.mediaFormat);
+            // Capture streamSid/callSid from start event too (some regions skip "connected")
+            streamSid = streamSid || data.streamSid;
+            callSid = callSid || data.callSid;
+
+            await loadPayer();
+            payerName = payer?.PayerName || 'the customer';
+            amountText = payer?.TotalPastDue
+              ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
+              : 'the outstanding balance';
+            voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
+
+            // Ensure OpenAI is connected even if "connected" was skipped
+            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+              try {
+                await connectToOpenAI();
+                console.log(`>>> [TWILIO] OpenAI connection established (start event)`);
+                const initialGreeting = {
+                  type: 'response.create',
+                  response: {
+                    modalities: ['audio', 'text'],
+                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
+                  }
+                };
+                safeSendToOpenAI(initialGreeting);
+                const startText = {
+                  type: 'input_text',
+                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
+                };
+                safeSendToOpenAI(startText);
+              } catch (err) {
+                console.error(`>>> [TWILIO] Failed to connect to OpenAI (start event):`, err.message);
+              }
+            }
+            break;
+
+          case 'media':
+            // Audio from Twilio - send to OpenAI
+            // If OpenAI not yet connected (e.g., missing connected/start), connect now lazily
+            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+              try {
+                await connectToOpenAI();
+                console.log(`>>> [TWILIO] OpenAI connection established (lazy on media)`);
+                await loadPayer();
+                payerName = payer?.PayerName || 'the customer';
+                amountText = payer?.TotalPastDue
+                  ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
+                  : 'the outstanding balance';
+                voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
+                const initialGreeting = {
+                  type: 'response.create',
+                  response: {
+                    modalities: ['audio', 'text'],
+                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
+                  }
+                };
+                safeSendToOpenAI(initialGreeting);
+                const startText = {
+                  type: 'input_text',
+                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
+                };
+                safeSendToOpenAI(startText);
+              } catch (err) {
+                console.error(`>>> [TWILIO] Failed to connect to OpenAI (media event):`, err.message);
+              }
+            }
+
+            if (openaiWs && openaiWs.readyState === WebSocket.OPEN && data.media?.payload) {
+              const audioData = {
+                type: 'input_audio_buffer.append',
+                audio: data.media.payload
+              };
+              openaiWs.send(JSON.stringify(audioData));
+            }
+            break;
+
+          case 'dtmf':
+            // Ignore DTMF for now; could be used later
+            console.log(`>>> [TWILIO] DTMF detected (ignored)`);
+            break;
+
+          case 'stop':
+            console.log(`>>> [TWILIO] Media stream stopped`);
+            
+            // Close OpenAI connection
+            if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+              openaiWs.close();
+
+            // If streamSid still missing, stash from mediaFormat if present
+            if (!streamSid && data.mediaFormat?.streamSid) {
+              streamSid = data.mediaFormat.streamSid;
+            }
+
+            }
+
+            // Update database with call completion
+            try {
+              const db = await cds.connect.to('db');
+              await db.run(
+                UPDATE(Payers)
+                  .set({ 
+                    LastOutreachStatus: 'CALL_COMPLETED',
+                    lastOutreachAt: new Date().toISOString()
+                  })
+                  .where({ PayerId: payerId })
+              );
+              console.log(`>>> [TWILIO] Call completed and database updated`);
+            } catch (err) {
+              console.error(`>>> [TWILIO] Error updating DB:`, err.message);
+            }
+            break;
+
+          default:
+            console.log(`>>> [TWILIO] Unknown event: ${event}`);
+        }
+      } catch (err) {
+        console.error(`>>> [TWILIO] Message error:`, err.message);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error(`>>> [TWILIO] WebSocket Error:`, error.message);
+      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+        openaiWs.close();
+      }
+    });
+
+    ws.on('close', () => {
+      console.log(`>>> [TWILIO] ========== WEBSOCKET CLOSED ==========`);
+      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+        openaiWs.close();
+      }
+    });
   });
 
   console.log('>>> [ROUTES] ✓ All webhook routes registered successfully!');

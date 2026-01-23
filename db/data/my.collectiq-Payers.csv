@@ -1,4 +1,4 @@
 PayerId,PayerName,TotalPastDue,MaxDaysPastDue,Stage,criticality,LastOutreachStatus,ContactEmail,ContactPhone,Currency
 1001,Reliance Industries,50000.00,4,STAGE_1,3,NONE,gaurriya1611@gmail.com,+919265218188,INR
 1002,Tata Motors,120000.00,8,STAGE_2,2,NONE,abhijeetrathore104@gmail.com,+919376481607,INR
-1003,Adani Group,85000.00,30,STAGE_3,1,NONE,riyagaur1625@gmail.com,+919974863295,INR
+1003,Adani Group,85000.00,30,STAGE_3,1,NONE,riyagaur1625@gmail.com,+15122154525,INR

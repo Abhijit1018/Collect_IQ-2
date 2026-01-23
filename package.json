@@ -22,10 +22,12 @@
     "cron": "^3.5.0",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
+    "express-ws": "^5.0.2",
     "ngrok": "^5.0.0-beta.2",
     "nodemailer": "^7.0.12",
     "openai": "^6.16.0",
-    "twilio": "^5.11.2"
+    "twilio": "^5.11.2",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2.1.2",
