@@ -1,4 +1,9 @@
 PayerId,PayerName,TotalPastDue,MaxDaysPastDue,Stage,criticality,LastOutreachStatus,ContactEmail,ContactPhone,Currency
-1001,Reliance Industries,50000.00,4,STAGE_1,3,NONE,gaurriya1611@gmail.com,+919265218188,INR
-1002,Tata Motors,120000.00,8,STAGE_2,2,NONE,abhijeetrathore104@gmail.com,+919376481607,INR
-1003,Adani Group,85000.00,30,STAGE_3,1,NONE,riyagaur1625@gmail.com,+15122154525,INR
+1001,Reliance Industries,50000.00,4,STAGE_1,3,NONE,gaurriya1611@gmail.com,+919265218188,USD
+1002,Tata Motors,120000.00,8,STAGE_2,2,NONE,abhijeetrathore104@gmail.com,+919376481607,USD
+1003,Adani Group,85000.00,30,STAGE_3,1,NONE,riyagaur1625@gmail.com,+15122154525,USD
+1004,Wipro Limited,35000.00,2,STAGE_1,4,NONE,rothoreabhijeet@gmail.com,+919876543210,USD
+1005,Infosys Technologies,42000.00,1,STAGE_2,4,NONE,riyagaurvegah@gmail.com,+919123456789,USD
+1006,TCS India,28000.00,0,STAGE_1,4,NONE,gaurriya1611@outlook.com,+918765432109,USD
+1007,HCL Technologies,55000.00,15,STAGE_2,2,NONE,riyagaur16@yahoo.com,+918654321098,USD
+1008,Bharat Petroleum,65000.00,3,STAGE_1,3,NONE,accounts@bp.example.com,+919234567890,USD

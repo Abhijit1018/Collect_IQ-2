@@ -61,7 +61,17 @@
                     press="onSendOutreachAll"
                     tooltip="Send pending outreach messages to all customers"/>
                 <ToolbarSeparator/>
-                <Button icon="sap-icon://filter" tooltip="Filter customer list by criteria"/>
+                <Select
+                    id="stageFilter"
+                    change="onFilter"
+                    tooltip="Filter by Collection Stage"
+                    width="150px">
+                    <core:Item key="ALL" text="All Stages"/>
+                    <core:Item key="STAGE_1" text="New (Stage 1)"/>
+                    <core:Item key="STAGE_2" text="Follow-up (Stage 2)"/>
+                    <core:Item key="STAGE_3" text="Legal (Stage 3)"/>
+                    <core:Item key="RESOLVED" text="Resolved"/>
+                </Select>
                 <Button icon="sap-icon://sort" tooltip="Sort customer list"/>
                 <Button icon="sap-icon://excel-attachment" tooltip="Export customer list to Excel"/>
             </Toolbar>
@@ -136,7 +146,7 @@
                             <ObjectNumber
                                 number="{
                                     path: 'TotalPastDue',
-                                    formatter: '.formatter.formatCurrency'
+                                    formatter: '.formatter.formatCompact'
                                 }"
                                 unit="{Currency}"
                                 state="{= ${TotalPastDue} > 10000 ? 'Error' : (${TotalPastDue} > 5000 ? 'Warning' : 'Success')}"

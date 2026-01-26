@@ -21,10 +21,21 @@ sap.ui.define([
 
         onSearch: function (oEvent) {
             var sQuery = oEvent.getParameter("newValue");
+            this._applyFilters(sQuery, this.byId("stageFilter").getSelectedKey());
+        },
+
+        onFilter: function (oEvent) {
+            var sKey = oEvent.getParameter("selectedItem").getKey();
+            var sQuery = this.byId("searchField").getValue();
+            this._applyFilters(sQuery, sKey);
+        },
+
+        _applyFilters: function (sQuery, sStageKey) {
             var oTable = this.byId("customerTable");
             var oBinding = oTable.getBinding("items");
-
             var aFilters = [];
+
+            // Search Filter
             if (sQuery) {
                 aFilters.push(new Filter({
                     filters: [
@@ -36,7 +47,21 @@ sap.ui.define([
                 }));
             }
 
-            oBinding.filter(aFilters);
+            // Stage Filter
+            if (sStageKey && sStageKey !== "ALL") {
+                aFilters.push(new Filter("Stage", FilterOperator.EQ, sStageKey));
+            }
+
+            // Combine filters if there are any
+            if (aFilters.length > 0) {
+                // If both search and filter are present, we need to AND them.
+                // The Search filter is an OR group, so it's one filter object.
+                // The Stage filter is another filter object.
+                // By default oBinding.filter(aFilters) ANDs the top-level array.
+                oBinding.filter(aFilters);
+            } else {
+                oBinding.filter([]);
+            }
         },
 
         onItemPress: function (oEvent) {
@@ -64,7 +89,7 @@ sap.ui.define([
             var that = this;
             var oModel = this.getView().getModel();
 
-            var oActionBinding = oModel.bindContext("/generateOutreachForAll(...)");
+            var oActionBinding = oModel.bindContext("/CollectIQService.generateOutreachForAll(...)");
 
             oActionBinding.execute().then(function () {
                 var sMessage = oActionBinding.getBoundContext().getObject().value;
@@ -79,7 +104,7 @@ sap.ui.define([
             var that = this;
             var oModel = this.getView().getModel();
 
-            var oActionBinding = oModel.bindContext("/sendOutreachToAll(...)");
+            var oActionBinding = oModel.bindContext("/CollectIQService.sendOutreachToAll(...)");
 
             oActionBinding.execute().then(function () {
                 var sMessage = oActionBinding.getBoundContext().getObject().value;
@@ -104,14 +129,12 @@ sap.ui.define([
             var sPayerName = oContext.getProperty("PayerName");
             var oModel = this.getView().getModel();
 
-            // First generate, then send
-            var oGenBinding = oModel.bindContext("/generateOutreach(...)");
-            oGenBinding.setParameter("PayerId", sPayerId);
+            // First generate, then send (Bound Actions - Absolute Path)
+            var sPath = oContext.getPath();
+            var oGenBinding = oModel.bindContext(sPath + "/CollectIQService.generateOutreach(...)");
 
             oGenBinding.execute().then(function () {
-                var oSendBinding = oModel.bindContext("/sendOutreach(...)");
-                oSendBinding.setParameter("PayerId", sPayerId);
-
+                var oSendBinding = oModel.bindContext(sPath + "/CollectIQService.sendOutreach(...)");
                 return oSendBinding.execute();
             }).then(function () {
                 MessageToast.show("Outreach sent to " + sPayerName);

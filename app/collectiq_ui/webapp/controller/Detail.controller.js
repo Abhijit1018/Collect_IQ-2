@@ -53,9 +53,10 @@ sap.ui.define([
 
             var sPayerId = oContext.getProperty("PayerId");
 
-            // Call the service action
-            var oActionBinding = oModel.bindContext("/generateOutreach(...)");
-            oActionBinding.setParameter("PayerId", sPayerId);
+            // Call the bound service action (Absolute Path Construction)
+            var sPath = oContext.getPath();
+            var oActionBinding = oModel.bindContext(sPath + "/CollectIQService.generateOutreach(...)");
+            // No parameter needed: bound action uses the context's ID
 
             oActionBinding.execute().then(function () {
                 var sMessage = oActionBinding.getBoundContext().getObject().value;
@@ -79,9 +80,10 @@ sap.ui.define([
 
             var sPayerId = oContext.getProperty("PayerId");
 
-            // Call the service action
-            var oActionBinding = oModel.bindContext("/sendOutreach(...)");
-            oActionBinding.setParameter("PayerId", sPayerId);
+            // Call the bound service action (Absolute Path Construction)
+            var sPath = oContext.getPath();
+            var oActionBinding = oModel.bindContext(sPath + "/CollectIQService.sendOutreach(...)");
+            // No parameter needed: bound action uses the context's ID
 
             oActionBinding.execute().then(function () {
                 var sMessage = oActionBinding.getBoundContext().getObject().value;

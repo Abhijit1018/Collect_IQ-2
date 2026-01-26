@@ -18,6 +18,25 @@ sap.ui.define([], function () {
         },
 
         /**
+         * Formats values in compact notation (e.g. 1k, 1M)
+         * @param {number} value - The numeric value
+         * @returns {string} Formatted string
+         */
+        formatCompact: function (value) {
+            if (value === null || value === undefined) {
+                return "0";
+            }
+            var fValue = parseFloat(value);
+            if (isNaN(fValue)) {
+                return "0";
+            }
+            return Intl.NumberFormat('en-US', {
+                notation: "compact",
+                maximumFractionDigits: 1
+            }).format(fValue);
+        },
+
+        /**
          * Formats date values
          * @param {string} value - The date string or timestamp
          * @returns {string} Formatted date string

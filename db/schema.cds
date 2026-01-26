@@ -5,7 +5,7 @@ using { managed } from '@sap/cds/common';
 entity Payers : managed {
     key PayerId            : String(20); // Changed from payerId
     PayerName              : String(120); // Changed from payerName
-    TotalPastDue           : Decimal(15,2); // Changed from totalPastDue
+    TotalPastDue           : Double; // Changed from Decimal(15,2)
     MaxDaysPastDue         : Integer; // Changed from maxDaysPastDue
     Stage                  : String(15); // Changed from stage
     ContactEmail           : String(120); // Added from metadata
@@ -24,7 +24,7 @@ entity Invoices : managed {
     key InvoiceId          : UUID; // Changed from invoiceId
     PayerId                : String(20); // Changed from payerId
     InvoiceNumber          : String(20); // Changed from invoiceNumber
-    InvoiceAmount          : Decimal(15,2); // Changed from invoiceAmount
+    InvoiceAmount          : Double; // Changed from Decimal(15,2)
     DueDate                : Date;
     DaysPastDue            : Integer; // Changed from daysPastDue
     Currency               : String(5);

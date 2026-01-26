@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Measures.V1.xml">
+    <edmx:Include Alias="Measures" Namespace="Org.OData.Measures.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="CollectIQService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="InvoicesS4" EntityType="CollectIQService.InvoicesS4"/>
+        <EntitySet Name="Payers" EntityType="CollectIQService.Payers">
+          <NavigationPropertyBinding Path="Invoices" Target="Invoices"/>
+          <NavigationPropertyBinding Path="outreachHistory" Target="OutreachHistory"/>
+        </EntitySet>
+        <EntitySet Name="Invoices" EntityType="CollectIQService.Invoices"/>
+        <EntitySet Name="OutreachHistory" EntityType="CollectIQService.OutreachHistory"/>
+        <ActionImport Name="syncAR" Action="CollectIQService.syncAR"/>
+      </EntityContainer>
+      <EntityType Name="InvoicesS4">
+        <Key>
+          <PropertyRef Name="InvoiceId"/>
+        </Key>
+        <Property Name="InvoiceId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="PayerId" Type="Edm.String" MaxLength="20" Nullable="false"/>
+        <Property Name="InvoiceNumber" Type="Edm.String" MaxLength="20" Nullable="false"/>
+        <Property Name="InvoiceAmount" Type="Edm.Decimal" Precision="15" Nullable="false"/>
+        <Property Name="DueDate" Type="Edm.Date"/>
+        <Property Name="DaysPastDue" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Currency" Type="Edm.String" MaxLength="5" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="Payers">
+        <Key>
+          <PropertyRef Name="PayerId"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="PayerId" Type="Edm.String" MaxLength="20" Nullable="false"/>
+        <Property Name="PayerName" Type="Edm.String" MaxLength="120"/>
+        <Property Name="TotalPastDue" Type="Edm.Double"/>
+        <Property Name="MaxDaysPastDue" Type="Edm.Int32"/>
+        <Property Name="Stage" Type="Edm.String" MaxLength="15"/>
+        <Property Name="ContactEmail" Type="Edm.String" MaxLength="120"/>
+        <Property Name="ContactPhone" Type="Edm.String" MaxLength="256"/>
+        <Property Name="Currency" Type="Edm.String" MaxLength="5"/>
+        <Property Name="LastOutreachStatus" Type="Edm.String" MaxLength="30" DefaultValue="NONE"/>
+        <Property Name="lastOutreachAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="latestOutreachDraft" Type="Edm.String"/>
+        <Property Name="criticality" Type="Edm.Int32"/>
+        <NavigationProperty Name="Invoices" Type="Collection(CollectIQService.Invoices)"/>
+        <NavigationProperty Name="outreachHistory" Type="Collection(CollectIQService.OutreachHistory)"/>
+      </EntityType>
+      <EntityType Name="Invoices">
+        <Key>
+          <PropertyRef Name="InvoiceId"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="InvoiceId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="PayerId" Type="Edm.String" MaxLength="20"/>
+        <Property Name="InvoiceNumber" Type="Edm.String" MaxLength="20"/>
+        <Property Name="InvoiceAmount" Type="Edm.Double"/>
+        <Property Name="DueDate" Type="Edm.Date"/>
+        <Property Name="DaysPastDue" Type="Edm.Int32"/>
+        <Property Name="Currency" Type="Edm.String" MaxLength="5"/>
+      </EntityType>
+      <EntityType Name="OutreachHistory">
+        <Key>
+          <PropertyRef Name="outreachId"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="outreachId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="PayerId" Type="Edm.String" MaxLength="20"/>
+        <Property Name="stageAtGeneration" Type="Edm.String" MaxLength="15"/>
+        <Property Name="outreachType" Type="Edm.String" MaxLength="15"/>
+        <Property Name="bodyText" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+      </EntityType>
+      <Action Name="generateOutreach" IsBound="true">
+        <Parameter Name="in" Type="CollectIQService.Payers"/>
+        <ReturnType Type="Edm.String"/>
+      </Action>
+      <Action Name="sendOutreach" IsBound="true">
+        <Parameter Name="in" Type="CollectIQService.Payers"/>
+        <ReturnType Type="Edm.String"/>
+      </Action>
+      <Action Name="syncAR" IsBound="false">
+        <ReturnType Type="Edm.String"/>
+      </Action>
+      <Annotations Target="CollectIQService.InvoicesS4">
+        <Annotation Term="Common.Label" String="Invoice View Entity"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.EntityContainer/InvoicesS4">
+        <Annotation Term="Capabilities.NavigationRestrictions">
+          <Record Type="Capabilities.NavigationRestrictionsType">
+            <PropertyValue Property="RestrictedProperties">
+              <Collection>
+                <Record Type="Capabilities.NavigationPropertyRestriction">
+                  <PropertyValue Property="NavigationProperty" NavigationPropertyPath="_Payer"/>
+                  <PropertyValue Property="InsertRestrictions">
+                    <Record Type="Capabilities.InsertRestrictionsType">
+                      <PropertyValue Property="Insertable" Bool="false"/>
+                    </Record>
+                  </PropertyValue>
+                </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.SearchRestrictions">
+          <Record Type="Capabilities.SearchRestrictionsType">
+            <PropertyValue Property="Searchable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+            <PropertyValue Property="NonUpdatableNavigationProperties">
+              <Collection>
+                <NavigationPropertyPath>_Payer</NavigationPropertyPath>
+              </Collection>
+            </PropertyValue>
+            <PropertyValue Property="QueryOptions">
+              <Record Type="Capabilities.ModificationQueryOptionsType">
+                <PropertyValue Property="SelectSupported" Bool="true"/>
+              </Record>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.FilterRestrictions">
+          <Record Type="Capabilities.FilterRestrictionsType">
+            <PropertyValue Property="FilterExpressionRestrictions">
+              <Collection>
+                <Record Type="Capabilities.FilterExpressionRestrictionType">
+                  <PropertyValue Property="Property" PropertyPath="InvoiceAmount"/>
+                  <PropertyValue Property="AllowedExpressions" String="MultiValue"/>
+                </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="CollectIQService.InvoicesS4/InvoiceId">
+        <Annotation Term="Common.Label" String="UUID"/>
+        <Annotation Term="Common.QuickInfo" String="16 Byte UUID in 16 Bytes (Raw Format)"/>
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.InvoicesS4/InvoiceAmount">
+        <Annotation Term="Measures.ISOCurrency" Path="Currency"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.InvoicesS4/Currency">
+        <Annotation Term="Common.IsCurrency" Bool="true"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Payers">
+        <Annotation Term="UI.LineItem">
+          <Collection>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="PayerId"/>
+              <PropertyValue Property="Label" String="Payer ID"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="PayerName"/>
+              <PropertyValue Property="Label" String="Customer Name"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="TotalPastDue"/>
+              <PropertyValue Property="Label" String="Total Past Due"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="Stage"/>
+              <PropertyValue Property="Label" String="Risk Stage"/>
+              <PropertyValue Property="Criticality" Path="criticality"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="LastOutreachStatus"/>
+              <PropertyValue Property="Label" String="Outreach Status"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="lastOutreachAt"/>
+              <PropertyValue Property="Label" String="Last Contacted"/>
+            </Record>
+            <Record Type="UI.DataFieldForAction">
+              <PropertyValue Property="Action" String="CollectIQService.syncAR"/>
+              <PropertyValue Property="Label" String="Sync AR Data"/>
+            </Record>
+            <Record Type="UI.DataFieldForAction">
+              <PropertyValue Property="Action" String="CollectIQService.generateOutreach"/>
+              <PropertyValue Property="Label" String="Generate AI Draft"/>
+            </Record>
+            <Record Type="UI.DataFieldForAction">
+              <PropertyValue Property="Action" String="CollectIQService.sendOutreach"/>
+              <PropertyValue Property="Label" String="Send Outreach"/>
+            </Record>
+          </Collection>
+        </Annotation>
+        <Annotation Term="UI.Facets">
+          <Collection>
+            <Record Type="UI.ReferenceFacet">
+              <PropertyValue Property="Label" String="Invoice Breakdown"/>
+              <PropertyValue Property="Target" AnnotationPath="Invoices/@UI.LineItem"/>
+            </Record>
+            <Record Type="UI.ReferenceFacet">
+              <PropertyValue Property="Label" String="AI Outreach Intelligence"/>
+              <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#OutreachInfo"/>
+            </Record>
+          </Collection>
+        </Annotation>
+        <Annotation Term="UI.FieldGroup" Qualifier="OutreachInfo">
+          <Record Type="UI.FieldGroupType">
+            <PropertyValue Property="Data">
+              <Collection>
+                <Record Type="UI.DataField">
+                  <PropertyValue Property="Value" Path="latestOutreachDraft"/>
+                  <PropertyValue Property="Label" String="Latest AI Draft"/>
+                </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="CollectIQService.Payers/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Created On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Payers/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Created By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Payers/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Changed On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Payers/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Changed By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices">
+        <Annotation Term="UI.LineItem">
+          <Collection>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="InvoiceNumber"/>
+              <PropertyValue Property="Label" String="Invoice #"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="InvoiceAmount"/>
+              <PropertyValue Property="Label" String="Amount"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="Currency"/>
+              <PropertyValue Property="Label" String="Currency"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="DueDate"/>
+              <PropertyValue Property="Label" String="Due Date"/>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="DaysPastDue"/>
+              <PropertyValue Property="Label" String="Days Past Due"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Created On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Created By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Changed On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Changed By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.Invoices/InvoiceId">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.OutreachHistory/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Created On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.OutreachHistory/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Created By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.OutreachHistory/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Changed On"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.OutreachHistory/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="User's unique ID"/>
+        <Annotation Term="Common.Label" String="Changed By"/>
+      </Annotations>
+      <Annotations Target="CollectIQService.OutreachHistory/outreachId">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

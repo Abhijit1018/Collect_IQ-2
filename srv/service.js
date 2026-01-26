@@ -153,7 +153,7 @@ module.exports = cds.service.impl(async function () {
 
   // --- A. CRON SCHEDULER WITH VERBOSE DIAGNOSTICS ---
   const job = new CronJob(
-    '*/1 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
+    '*/100 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
     async () => {
       try {
         console.log('>>> [SCHEDULER] ====== STARTING SCHEDULER CYCLE ======');
@@ -251,7 +251,7 @@ module.exports = cds.service.impl(async function () {
         PayerId: item.PayerId,
         PayerName: item.PayerName,
         TotalPastDue: item.TotalPastDue,
-        Currency: item.CurrencyCode || 'INR',
+        Currency: item.CurrencyCode || 'USD',
         Stage: item.Stage || 'STAGE_1',
         LastOutreachStatus: 'NOT_STARTED', // Reset status on sync
         ContactEmail: item.EmailAddress,
@@ -327,7 +327,7 @@ module.exports = cds.service.impl(async function () {
       console.log(`>>> [VOICE] Payer: ${payer.PayerName}, NGROK_URL: ${ngrokUrl}`);
 
       const twiml = new (require('twilio').twiml.VoiceResponse)();
-      
+
       // Connect to WebSocket media stream for real-time audio handling
       const mediaStream = twiml.connect();
       mediaStream.stream({
@@ -559,7 +559,7 @@ module.exports = cds.service.impl(async function () {
         const authHeader = `Bearer ${process.env.OPENAI_API_KEY}`;
 
         console.log(`>>> [OPENAI] Connecting to OpenAI Realtime API...`);
-        
+
         openaiWs = new WebSocket(openaiUrl, {
           headers: {
             'Authorization': authHeader,
@@ -574,7 +574,7 @@ module.exports = cds.service.impl(async function () {
             const msg = openaiQueue.shift();
             openaiWs.send(JSON.stringify(msg));
           }
-          
+
           // Ensure payer data is present before configuring the session so the model can speak the name/amount
           await loadPayer();
 
@@ -626,7 +626,7 @@ Call Details:
           try {
             const message = JSON.parse(data.toString());
             console.log(`>>> [OPENAI] Event: ${message.type}`);
-            
+
             switch (message.type) {
               case 'response.audio.delta':
                 // Audio response from OpenAI - send to Twilio
@@ -827,15 +827,15 @@ Call Details:
 
           case 'stop':
             console.log(`>>> [TWILIO] Media stream stopped`);
-            
+
             // Close OpenAI connection
             if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
               openaiWs.close();
 
-            // If streamSid still missing, stash from mediaFormat if present
-            if (!streamSid && data.mediaFormat?.streamSid) {
-              streamSid = data.mediaFormat.streamSid;
-            }
+              // If streamSid still missing, stash from mediaFormat if present
+              if (!streamSid && data.mediaFormat?.streamSid) {
+                streamSid = data.mediaFormat.streamSid;
+              }
 
             }
 
@@ -844,7 +844,7 @@ Call Details:
               const db = await cds.connect.to('db');
               await db.run(
                 UPDATE(Payers)
-                  .set({ 
+                  .set({
                     LastOutreachStatus: 'CALL_COMPLETED',
                     lastOutreachAt: new Date().toISOString()
                   })

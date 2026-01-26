@@ -94,7 +94,7 @@
                                         <Title 
                                             text="{
                                                 path: 'TotalPastDue',
-                                                formatter: '.formatter.formatCurrency'
+                                                formatter: '.formatter.formatCompact'
                                             }" 
                                             level="H1" 
                                             class="sapUiTinyMarginBegin"/>
@@ -109,7 +109,7 @@
                                 </VBox>
                                 
                                 <!-- Current Stage Card -->
-                                <VBox class="statsCard" tooltip="Current stage in collection process">
+                                <VBox class="statsCard info" tooltip="Current stage in collection process">
                                     <Text text="Current Stage"/>
                                     <Title text="{Stage}" level="H2" class="sapUiSmallMarginTop"/>
                                 </VBox>
