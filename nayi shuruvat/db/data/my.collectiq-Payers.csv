@@ -1,0 +1,11 @@
+PayerId;PayerName;TotalPastDue;MaxDaysPastDue;Stage;ContactEmail;ContactPhone;Currency;LastOutreachStatus;criticality
+CUST001;Acme Corporation;15750.50;45;FOLLOW_UP;accounts@acmecorp.com;+1 (555) 123-4567;USD;SENT;2
+CUST002;Global Tech Solutions;32500.00;72;ESCALATED;finance@globaltech.io;+1 (555) 234-5678;USD;PENDING;3
+CUST003;Sunrise Imports Ltd;8200.75;28;NEW;payments@sunriseimports.com;+1 (555) 345-6789;USD;NONE;1
+CUST004;Metro Services Inc;45000.00;95;LEGAL;legal@metroservices.com;+1 (555) 456-7890;USD;SENT;3
+CUST005;Pacific Trading Co;0.00;0;RESOLVED;ap@pacifictrading.net;+1 (555) 567-8901;USD;SENT;0
+CUST006;Northern Manufacturing;12300.00;35;FOLLOW_UP;treasury@northernmfg.com;+1 (555) 678-9012;USD;PENDING;2
+CUST007;Coastal Logistics;5600.25;15;NEW;billing@coastallogistics.com;+1 (555) 789-0123;USD;NONE;1
+CUST008;Summit Healthcare;28750.00;55;ESCALATED;finance@summithealth.org;+1 (555) 890-1234;USD;SENT;3
+CUST009;Valley Distributors;9450.00;42;FOLLOW_UP;accounts@valleydist.com;+1 (555) 901-2345;USD;SENT;2
+CUST010;Premier Electronics;18900.50;65;ESCALATED;ar@premierelec.com;+1 (555) 012-3456;USD;PENDING;3

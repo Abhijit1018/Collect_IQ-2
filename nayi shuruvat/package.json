@@ -1,0 +1,29 @@
+{
+    "name": "collectiq",
+    "version": "1.0.0",
+    "description": "CollectiQ - Customer Collection Management",
+    "repository": "",
+    "license": "UNLICENSED",
+    "private": true,
+    "dependencies": {
+        "@sap/cds": "^8.9.8",
+        "express": "^4"
+    },
+    "devDependencies": {
+        "@cap-js/sqlite": "^1"
+    },
+    "scripts": {
+        "start": "cds-serve",
+        "watch": "cds watch"
+    },
+    "cds": {
+        "requires": {
+            "db": {
+                "kind": "sqlite",
+                "credentials": {
+                    "url": ":memory:"
+                }
+            }
+        }
+    }
+}

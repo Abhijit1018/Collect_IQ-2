@@ -11,7 +11,7 @@
         },
         "dataSources": {
             "mainService": {
-                "uri": "/odata/v4/collect-iq/",
+                "uri": "/odata/v4/collectiq/",
                 "type": "OData",
                 "settings": {
                     "odataVersion": "4.0"

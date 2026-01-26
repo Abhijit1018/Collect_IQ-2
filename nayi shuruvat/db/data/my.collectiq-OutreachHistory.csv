@@ -1,0 +1,12 @@
+outreachId;PayerId;stageAtGeneration;outreachType;bodyText;status
+bbbbbbbb-bbbb-bbbb-bbbb-000000000001;CUST001;FOLLOW_UP;EMAIL;Dear Acme Corporation, This is a friendly reminder about your outstanding balance. Please arrange payment at your earliest convenience.;SENT
+bbbbbbbb-bbbb-bbbb-bbbb-000000000002;CUST001;NEW;EMAIL;Welcome to our collection process. Please review the attached statement.;SENT
+cccccccc-cccc-cccc-cccc-000000000001;CUST002;ESCALATED;PHONE;Called accounts payable department. Left voicemail regarding overdue invoices.;PENDING
+cccccccc-cccc-cccc-cccc-000000000002;CUST002;FOLLOW_UP;EMAIL;Second notice regarding outstanding invoices. Please contact us to discuss payment.;SENT
+dddddddd-dddd-dddd-dddd-000000000001;CUST004;LEGAL;LETTER;FINAL NOTICE BEFORE LEGAL ACTION: Legal proceedings will commence within 7 business days if payment is not received.;SENT
+dddddddd-dddd-dddd-dddd-000000000002;CUST004;ESCALATED;PHONE;Spoke with CFO regarding payment plan options. Customer requested extension which was denied.;SENT
+eeeeeeee-eeee-eeee-eeee-000000000001;CUST005;RESOLVED;EMAIL;Thank you for your payment. Your account is now current. We appreciate your business.;SENT
+ffffffff-ffff-ffff-ffff-000000000001;CUST006;FOLLOW_UP;EMAIL;Payment reminder for outstanding invoices. Please process payment or contact us.;PENDING
+gggggggg-gggg-gggg-gggg-000000000001;CUST008;ESCALATED;EMAIL;ESCALATION NOTICE: Your account has been escalated due to non-payment.;SENT
+hhhhhhhh-hhhh-hhhh-hhhh-000000000001;CUST009;FOLLOW_UP;EMAIL;Following up on our previous communication. Please review attached statement.;SENT
+iiiiiiii-iiii-iiii-iiii-000000000001;CUST010;ESCALATED;EMAIL;Your account requires immediate attention. Payment is now over 60 days past due.;PENDING

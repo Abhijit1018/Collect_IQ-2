@@ -1,0 +1,278 @@
+<mvc:View
+    controllerName="my.collectiq.controller.Detail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.f"
+    xmlns:uxap="sap.uxap"
+    height="100%">
+    
+    <uxap:ObjectPageLayout
+        id="objectPageLayout"
+        showTitleInHeaderContent="true"
+        upperCaseAnchorBar="false"
+        showAnchorBar="true">
+        
+        <!-- Header Title -->
+        <uxap:headerTitle>
+            <uxap:ObjectPageDynamicHeaderTitle>
+                <uxap:expandedHeading>
+                    <Title text="{PayerName}" level="H1" tooltip="Customer: {PayerName}"/>
+                </uxap:expandedHeading>
+                <uxap:snappedHeading>
+                    <Title text="{PayerName}" level="H3" tooltip="Customer: {PayerName}"/>
+                </uxap:snappedHeading>
+                <uxap:expandedContent>
+                    <HBox alignItems="Center">
+                        <ObjectStatus 
+                            text="ID: {PayerId}" 
+                            class="sapUiSmallMarginEnd"
+                            tooltip="Unique Customer Identifier"/>
+                        <ObjectStatus 
+                            text="{Stage}"
+                            state="{= ${Stage} === 'STAGE_3' ? 'Error' : (${Stage} === 'STAGE_2' ? 'Warning' : 'Information')}"
+                            class="sapUiSmallMarginEnd"
+                            tooltip="Current Collection Stage: {Stage}"/>
+                    </HBox>
+                </uxap:expandedContent>
+                <uxap:navigationActions>
+                    <uxap:ObjectPageHeaderActionButton 
+                        icon="sap-icon://nav-back" 
+                        text="Back"
+                        press="onNavBack"
+                        tooltip="Return to customer list"/>
+                </uxap:navigationActions>
+                <uxap:actions>
+                    <Button text="Generate Outreach" type="Default" icon="sap-icon://create" press="onGenerateOutreach" tooltip="Create a new outreach draft for this customer"/>
+                    <Button text="Send Outreach" type="Emphasized" icon="sap-icon://email" press="onSendOutreach" tooltip="Send the pending outreach to this customer"/>
+                    <Button icon="sap-icon://action" type="Transparent" tooltip="More actions"/>
+                </uxap:actions>
+            </uxap:ObjectPageDynamicHeaderTitle>
+        </uxap:headerTitle>
+        
+        <!-- Header Content -->
+        <uxap:headerContent>
+            <l:HorizontalLayout>
+                <VBox class="sapUiMediumMarginEnd" width="200px">
+                    <Label text="Contact Email" class="sapUiTinyMarginBottom"/>
+                    <Link text="{ContactEmail}" href="mailto:{ContactEmail}" tooltip="Click to send email to {ContactEmail}"/>
+                </VBox>
+                <VBox class="sapUiMediumMarginEnd" width="200px">
+                    <Label text="Contact Phone" class="sapUiTinyMarginBottom"/>
+                    <Link text="{ContactPhone}" href="tel:{ContactPhone}" tooltip="Click to call {ContactPhone}"/>
+                </VBox>
+                <VBox class="sapUiMediumMarginEnd" width="150px">
+                    <Label text="Currency" class="sapUiTinyMarginBottom"/>
+                    <Text text="{Currency}" tooltip="Default billing currency"/>
+                </VBox>
+                <VBox class="sapUiMediumMarginEnd" width="150px">
+                    <Label text="Criticality" class="sapUiTinyMarginBottom"/>
+                    <ObjectStatus 
+                        text="{= ${criticality} >= 3 ? 'HIGH' : (${criticality} >= 2 ? 'MEDIUM' : 'LOW')}"
+                        state="{= ${criticality} >= 3 ? 'Error' : (${criticality} >= 2 ? 'Warning' : 'Success')}"
+                        tooltip="Urgency Level: {criticality}/3"/>
+                </VBox>
+            </l:HorizontalLayout>
+        </uxap:headerContent>
+        
+        <!-- Sections -->
+        <uxap:sections>
+            
+            <!-- Overview Section -->
+            <uxap:ObjectPageSection title="Overview" id="overviewSection" tooltip="Customer financial overview">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="">
+                        <uxap:blocks>
+                            <l:Grid defaultSpan="XL3 L3 M6 S12" class="sapUiSmallMargin">
+                                
+                                <!-- Total Past Due Card -->
+                                <VBox class="statsCard danger" tooltip="Total outstanding amount past due date">
+                                    <Text text="Total Past Due"/>
+                                    <HBox alignItems="Baseline" class="sapUiSmallMarginTop">
+                                        <Title text="{Currency}" level="H3"/>
+                                        <Title 
+                                            text="{
+                                                path: 'TotalPastDue',
+                                                formatter: '.formatter.formatCurrency'
+                                            }" 
+                                            level="H1" 
+                                            class="sapUiTinyMarginBegin"/>
+                                    </HBox>
+                                </VBox>
+                                
+                                <!-- Days Past Due Card -->
+                                <VBox class="statsCard warning" tooltip="Days since oldest invoice due date">
+                                    <Text text="Max Days Past Due"/>
+                                    <Title text="{MaxDaysPastDue}" level="H1" class="sapUiSmallMarginTop"/>
+                                    <Text text="days overdue"/>
+                                </VBox>
+                                
+                                <!-- Current Stage Card -->
+                                <VBox class="statsCard" tooltip="Current stage in collection process">
+                                    <Text text="Current Stage"/>
+                                    <Title text="{Stage}" level="H2" class="sapUiSmallMarginTop"/>
+                                </VBox>
+                                
+                                <!-- Last Outreach Card -->
+                                <VBox class="statsCard success" tooltip="Most recent outreach attempt status">
+                                    <Text text="Last Outreach"/>
+                                    <Title text="{LastOutreachStatus}" level="H2" class="sapUiSmallMarginTop"/>
+                                    <Text 
+                                        text="{
+                                            path: 'lastOutreachAt',
+                                            formatter: '.formatter.formatDate'
+                                        }"/>
+                                </VBox>
+                            </l:Grid>
+                            
+                            <!-- Latest Outreach Draft -->
+                            <VBox class="sapUiMediumMargin" visible="{= !!${latestOutreachDraft}}">
+                                <Panel headerText="Latest Outreach Draft" class="premiumCard" tooltip="Preview of the pending outreach message">
+                                    <Text text="{latestOutreachDraft}" class="sapUiSmallMargin"/>
+                                </Panel>
+                            </VBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- Invoices Section -->
+            <uxap:ObjectPageSection title="Invoices" id="invoicesSection" tooltip="Outstanding invoices for this customer">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="">
+                        <uxap:blocks>
+                            <Table
+                                id="invoicesTable"
+                                items="{Invoices}"
+                                class="collectiqTable sapUiSmallMargin"
+                                tooltip="List of all invoices for this customer">
+                                
+                                <headerToolbar>
+                                    <OverflowToolbar>
+                                        <Title text="Invoice History" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Button icon="sap-icon://add" text="Add Invoice" tooltip="Create a new invoice for this customer"/>
+                                    </OverflowToolbar>
+                                </headerToolbar>
+                                
+                                <columns>
+                                    <Column width="20%" tooltip="Invoice reference number">
+                                        <Text text="Invoice #"/>
+                                    </Column>
+                                    <Column width="20%" hAlign="End" tooltip="Invoice total amount">
+                                        <Text text="Amount"/>
+                                    </Column>
+                                    <Column width="20%" hAlign="Center" tooltip="Payment due date">
+                                        <Text text="Due Date"/>
+                                    </Column>
+                                    <Column width="20%" hAlign="Center" tooltip="Days past the due date">
+                                        <Text text="Days Past Due"/>
+                                    </Column>
+                                    <Column width="20%" tooltip="Payment status">
+                                        <Text text="Status"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem tooltip="Invoice {InvoiceNumber} - {InvoiceAmount} {Currency}">
+                                        <cells>
+                                            <ObjectIdentifier title="{InvoiceNumber}" tooltip="Invoice Number: {InvoiceNumber}"/>
+                                            
+                                            <ObjectNumber
+                                                number="{
+                                                    path: 'InvoiceAmount',
+                                                    formatter: '.formatter.formatCurrency'
+                                                }"
+                                                unit="{Currency}"
+                                                tooltip="Amount: {InvoiceAmount} {Currency}"/>
+                                            
+                                            <Text text="{
+                                                path: 'DueDate',
+                                                formatter: '.formatter.formatDate'
+                                            }" tooltip="Due: {DueDate}"/>
+                                            
+                                            <ObjectStatus
+                                                text="{DaysPastDue} days"
+                                                state="{= ${DaysPastDue} > 60 ? 'Error' : (${DaysPastDue} > 30 ? 'Warning' : 'Success')}"
+                                                tooltip="{DaysPastDue} days past due date"/>
+                                            
+                                            <ObjectStatus
+                                                text="{= ${DaysPastDue} > 0 ? 'Overdue' : 'Current'}"
+                                                state="{= ${DaysPastDue} > 0 ? 'Error' : 'Success'}"
+                                                tooltip="{= ${DaysPastDue} > 0 ? 'Payment is overdue' : 'Payment is current'}"/>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- Outreach History Section -->
+            <uxap:ObjectPageSection title="Outreach History" id="outreachSection" tooltip="Communication history with this customer">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="">
+                        <uxap:blocks>
+                            <Table
+                                id="outreachTable"
+                                items="{outreachHistory}"
+                                class="collectiqTable sapUiSmallMargin"
+                                tooltip="All outreach communications sent">
+                                
+                                <headerToolbar>
+                                    <OverflowToolbar>
+                                        <Title text="Communication History" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Button icon="sap-icon://email" text="New Outreach" type="Emphasized" press="onGenerateOutreach" tooltip="Create a new outreach message"/>
+                                    </OverflowToolbar>
+                                </headerToolbar>
+                                
+                                <columns>
+                                    <Column width="15%" tooltip="Type of outreach (Email, Phone, Letter)">
+                                        <Text text="Type"/>
+                                    </Column>
+                                    <Column width="15%" tooltip="Collection stage when outreach was sent">
+                                        <Text text="Stage"/>
+                                    </Column>
+                                    <Column width="15%" tooltip="Delivery status of outreach">
+                                        <Text text="Status"/>
+                                    </Column>
+                                    <Column width="55%" tooltip="Message content">
+                                        <Text text="Message"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem tooltip="{outreachType} outreach - {status}">
+                                        <cells>
+                                            <ObjectStatus
+                                                text="{outreachType}"
+                                                state="Information"
+                                                icon="{= ${outreachType} === 'EMAIL' ? 'sap-icon://email' : (${outreachType} === 'PHONE' ? 'sap-icon://phone' : 'sap-icon://letter')}"
+                                                tooltip="Outreach type: {outreachType}"/>
+                                            
+                                            <Text text="{stageAtGeneration}" tooltip="Stage at time of outreach: {stageAtGeneration}"/>
+                                            
+                                            <ObjectStatus
+                                                text="{status}"
+                                                state="{= ${status} === 'SENT' ? 'Success' : (${status} === 'PENDING' ? 'Warning' : 'Error')}"
+                                                tooltip="Delivery status: {status}"/>
+                                            
+                                            <Text 
+                                                text="{bodyText}" 
+                                                maxLines="2"
+                                                tooltip="{bodyText}"/>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+        </uxap:sections>
+    </uxap:ObjectPageLayout>
+</mvc:View>

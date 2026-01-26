@@ -2,16 +2,16 @@ using CollectIQService as service from '../../srv/service';
 
 annotate service.Payers with @(
     UI.LineItem : [
-        { $Type: 'UI.DataField', Value: PayerId, Label: 'Payer ID' },
-        { $Type: 'UI.DataField', Value: PayerName, Label: 'Customer Name' },
-        { $Type: 'UI.DataField', Value: TotalPastDue, Label: 'Total Past Due' },
+        { $Type: 'UI.DataField', Value: PayerId, Label: 'Payer ID' }, // Updated
+        { $Type: 'UI.DataField', Value: PayerName, Label: 'Customer Name' }, // Updated
+        { $Type: 'UI.DataField', Value: TotalPastDue, Label: 'Total Past Due' }, // Updated
         {
             $Type: 'UI.DataField',
-            Value: Stage,
+            Value: Stage, // Updated
             Label: 'Risk Stage',
             Criticality: criticality
         },
-        { $Type: 'UI.DataField', Value: LastOutreachStatus, Label: 'Outreach Status' },
+        { $Type: 'UI.DataField', Value: LastOutreachStatus, Label: 'Outreach Status' }, // Updated
         { $Type: 'UI.DataField', Value: lastOutreachAt, Label: 'Last Contacted' },
         { $Type : 'UI.DataFieldForAction', Action : 'CollectIQService.syncAR', Label : 'Sync AR Data' },
         { $Type : 'UI.DataFieldForAction', Action : 'CollectIQService.generateOutreach', Label : 'Generate AI Draft' },
@@ -22,7 +22,7 @@ annotate service.Payers with @(
         {
             $Type : 'UI.ReferenceFacet',
             Label : 'Invoice Breakdown',
-            Target : 'Invoices/@UI.LineItem',
+            Target : 'Invoices/@UI.LineItem', // Updated Association Name
         },
         {
             $Type : 'UI.ReferenceFacet',
@@ -40,10 +40,10 @@ annotate service.Payers with @(
 
 annotate service.Invoices with @(
     UI.LineItem : [
-        { $Type: 'UI.DataField', Value: InvoiceNumber, Label: 'Invoice #' },
-        { $Type: 'UI.DataField', Value: InvoiceAmount, Label: 'Amount' },
-        { $Type: 'UI.DataField', Value: Currency, Label: 'Currency' },
-        { $Type: 'UI.DataField', Value: DueDate, Label: 'Due Date' },
-        { $Type: 'UI.DataField', Value: DaysPastDue, Label: 'Days Past Due' }
+        { $Type: 'UI.DataField', Value: InvoiceNumber, Label: 'Invoice #' }, // Updated
+        { $Type: 'UI.DataField', Value: InvoiceAmount, Label: 'Amount' }, // Updated
+        { $Type: 'UI.DataField', Value: Currency, Label: 'Currency' }, // Updated
+        { $Type: 'UI.DataField', Value: DueDate, Label: 'Due Date' }, // Updated
+        { $Type: 'UI.DataField', Value: DaysPastDue, Label: 'Days Past Due' } // Updated
     ]
 );

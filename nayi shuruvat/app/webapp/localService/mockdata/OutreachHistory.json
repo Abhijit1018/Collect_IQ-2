@@ -1,0 +1,124 @@
+{
+    "OutreachHistory": [
+        {
+            "outreachId": "out-001-001",
+            "PayerId": "CUST001",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "EMAIL",
+            "bodyText": "Dear Acme Corporation, This is a friendly reminder about your outstanding balance of $15,750.50. Please arrange payment at your earliest convenience. Best regards, Collections Team",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-001-002",
+            "PayerId": "CUST001",
+            "stageAtGeneration": "NEW",
+            "outreachType": "EMAIL",
+            "bodyText": "Welcome to our collection process. Please review the attached statement showing your current balance.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-002-001",
+            "PayerId": "CUST002",
+            "stageAtGeneration": "ESCALATED",
+            "outreachType": "PHONE",
+            "bodyText": "Called accounts payable department. Left voicemail requesting callback regarding overdue invoices totaling $32,500.",
+            "status": "PENDING"
+        },
+        {
+            "outreachId": "out-002-002",
+            "PayerId": "CUST002",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "EMAIL",
+            "bodyText": "Second notice regarding outstanding invoices. Please contact us to discuss payment arrangements.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-002-003",
+            "PayerId": "CUST002",
+            "stageAtGeneration": "NEW",
+            "outreachType": "EMAIL",
+            "bodyText": "Initial payment reminder sent for invoices approaching past due status.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-004-001",
+            "PayerId": "CUST004",
+            "stageAtGeneration": "LEGAL",
+            "outreachType": "LETTER",
+            "bodyText": "FINAL NOTICE BEFORE LEGAL ACTION: This letter serves as formal notification that legal proceedings will commence within 7 business days if payment of $45,000 is not received.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-004-002",
+            "PayerId": "CUST004",
+            "stageAtGeneration": "ESCALATED",
+            "outreachType": "PHONE",
+            "bodyText": "Spoke with CFO regarding payment plan options. Customer requested 30-day extension which was denied due to account age.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-004-003",
+            "PayerId": "CUST004",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "EMAIL",
+            "bodyText": "Urgent payment reminder. Your account is significantly past due and requires immediate attention.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-005-001",
+            "PayerId": "CUST005",
+            "stageAtGeneration": "RESOLVED",
+            "outreachType": "EMAIL",
+            "bodyText": "Thank you for your payment of $12,500. Your account is now current. We appreciate your business.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-006-001",
+            "PayerId": "CUST006",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "EMAIL",
+            "bodyText": "Payment reminder for outstanding invoices. Please process payment or contact us if you have questions.",
+            "status": "PENDING"
+        },
+        {
+            "outreachId": "out-008-001",
+            "PayerId": "CUST008",
+            "stageAtGeneration": "ESCALATED",
+            "outreachType": "EMAIL",
+            "bodyText": "ESCALATION NOTICE: Your account has been escalated due to non-payment. Please contact our collections department immediately.",
+            "status": "FAILED"
+        },
+        {
+            "outreachId": "out-008-002",
+            "PayerId": "CUST008",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "PHONE",
+            "bodyText": "Attempted phone contact. No answer. Will retry tomorrow.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-009-001",
+            "PayerId": "CUST009",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "EMAIL",
+            "bodyText": "Following up on our previous communication. Please review attached statement and arrange payment.",
+            "status": "SENT"
+        },
+        {
+            "outreachId": "out-010-001",
+            "PayerId": "CUST010",
+            "stageAtGeneration": "ESCALATED",
+            "outreachType": "EMAIL",
+            "bodyText": "Your account requires immediate attention. Payment of $18,900.50 is now over 60 days past due.",
+            "status": "PENDING"
+        },
+        {
+            "outreachId": "out-010-002",
+            "PayerId": "CUST010",
+            "stageAtGeneration": "FOLLOW_UP",
+            "outreachType": "PHONE",
+            "bodyText": "Left message with accounts payable regarding overdue balance.",
+            "status": "SENT"
+        }
+    ]
+}

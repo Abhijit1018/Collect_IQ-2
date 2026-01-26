@@ -1,0 +1,208 @@
+<mvc:View
+    controllerName="my.collectiq.controller.Main"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    height="100%">
+    
+    <Page 
+        showHeader="true"
+        enableScrolling="true"
+        class="sapUiNoContentPadding mainPageBg"
+        tooltip="CollectiQ Customer Collection Management Dashboard">
+        
+        <!-- Custom Header -->
+        <customHeader>
+            <Bar class="collectiqHeader">
+                <contentLeft>
+                    <HBox alignItems="Center">
+                        <core:Icon 
+                            src="sap-icon://customer-financial-fact-sheet" 
+                            size="1.5rem"
+                            color="#fff"
+                            class="sapUiSmallMarginEnd"/>
+                        <Title text="CollectiQ" level="H3" class="headerTitle" tooltip="Customer Collection Management System"/>
+                    </HBox>
+                </contentLeft>
+                <contentMiddle>
+                    <SearchField 
+                        id="searchField"
+                        placeholder="Search by name, ID, or email..."
+                        width="400px"
+                        liveChange="onSearch"
+                        class="headerSearch"
+                        tooltip="Search customers by name, ID, or email address"/>
+                </contentMiddle>
+                <contentRight>
+                    <Avatar initials="JW" displaySize="S" tooltip="Current User: John Watson"/>
+                </contentRight>
+            </Bar>
+        </customHeader>
+        
+        <content>
+            <!-- Action Toolbar -->
+            <Toolbar class="actionToolbar sapUiMediumMarginTop sapUiMediumMarginBegin sapUiMediumMarginEnd">
+                <Title text="Customer List" level="H4" tooltip="All customers in the collection system"/>
+                <ToolbarSpacer/>
+                <Button 
+                    id="generateOutreachBtn"
+                    text="Generate Outreach for All" 
+                    icon="sap-icon://create" 
+                    type="Emphasized"
+                    press="onGenerateOutreachAll"
+                    class="sapUiSmallMarginEnd"
+                    tooltip="Create draft outreach messages for all customers with outstanding balances"/>
+                <Button 
+                    id="sendOutreachBtn"
+                    text="Send Outreach to All" 
+                    icon="sap-icon://email" 
+                    type="Accept"
+                    press="onSendOutreachAll"
+                    tooltip="Send pending outreach messages to all customers"/>
+                <ToolbarSeparator/>
+                <Button icon="sap-icon://filter" tooltip="Filter customer list by criteria"/>
+                <Button icon="sap-icon://sort" tooltip="Sort customer list"/>
+                <Button icon="sap-icon://excel-attachment" tooltip="Export customer list to Excel"/>
+            </Toolbar>
+            
+            <!-- Customer Table - Full Width with Extended Info -->
+            <Table
+                id="customerTable"
+                items="{
+                    path: '/Payers',
+                    parameters: {
+                        $expand: 'Invoices'
+                    }
+                }"
+                growing="true"
+                growingThreshold="20"
+                mode="MultiSelect"
+                itemPress="onItemPress"
+                class="collectiqTable sapUiMediumMargin"
+                tooltip="Click on any row to see full customer details">
+                
+                <columns>
+                    <Column width="7%" tooltip="Unique customer identifier">
+                        <Text text="Customer ID"/>
+                    </Column>
+                    <Column width="14%" tooltip="Customer company name and contact phone">
+                        <Text text="Customer"/>
+                    </Column>
+                    <Column width="10%" hAlign="End" tooltip="Total outstanding amount past due">
+                        <Text text="Past Due"/>
+                    </Column>
+                    <Column width="6%" hAlign="Center" tooltip="Number of overdue days for oldest invoice">
+                        <Text text="Days"/>
+                    </Column>
+                    <Column width="8%" hAlign="Center" tooltip="Current collection stage">
+                        <Text text="Stage"/>
+                    </Column>
+                    <Column width="10%" tooltip="Last outreach status and date">
+                        <Text text="Last Outreach"/>
+                    </Column>
+                    <Column width="14%" tooltip="Primary contact email address">
+                        <Text text="Contact"/>
+                    </Column>
+                    <Column width="6%" hAlign="Center" tooltip="Urgency based on days overdue">
+                        <Text text="Urgency"/>
+                    </Column>
+                    <Column width="18%" tooltip="Latest outreach draft message preview">
+                        <Text text="Outreach Draft"/>
+                    </Column>
+                    <Column width="5%" hAlign="Center" tooltip="Quick actions for this customer">
+                        <Text text="Actions"/>
+                    </Column>
+                </columns>
+                
+                <items>
+                    <ColumnListItem 
+                        type="Navigation"
+                        press="onItemPress"
+                        tooltip="Click to view full details for {PayerName}">
+                        <cells>
+                            <!-- Customer ID -->
+                            <ObjectIdentifier 
+                                title="{PayerId}"
+                                tooltip="Customer ID: {PayerId}"/>
+                            
+                            <!-- Customer Name + Phone -->
+                            <VBox tooltip="Customer: {PayerName}&#10;Phone: {ContactPhone}">
+                                <Text text="{PayerName}" class="sapMTextBold"/>
+                                <Text text="{ContactPhone}" class="sapUiTinyMarginTop"/>
+                            </VBox>
+                            
+                            <!-- Total Past Due -->
+                            <ObjectNumber
+                                number="{
+                                    path: 'TotalPastDue',
+                                    formatter: '.formatter.formatCurrency'
+                                }"
+                                unit="{Currency}"
+                                state="{= ${TotalPastDue} > 10000 ? 'Error' : (${TotalPastDue} > 5000 ? 'Warning' : 'Success')}"
+                                tooltip="Total overdue: {TotalPastDue} {Currency}"/>
+                            
+                            <!-- Days Past Due -->
+                            <ObjectStatus
+                                text="{MaxDaysPastDue}"
+                                state="{= ${MaxDaysPastDue} > 60 ? 'Error' : (${MaxDaysPastDue} > 30 ? 'Warning' : 'Success')}"
+                                tooltip="{MaxDaysPastDue} days past the oldest invoice due date"/>
+                            
+                            <!-- Stage -->
+                            <ObjectStatus
+                                text="{Stage}"
+                                state="{= ${Stage} === 'STAGE_3' ? 'Error' : (${Stage} === 'STAGE_2' ? 'Warning' : 'Information')}"
+                                tooltip="Collection Stage: {Stage}"/>
+                            
+                            <!-- Last Outreach -->
+                            <VBox tooltip="Status: {LastOutreachStatus}&#10;Date: {lastOutreachAt}">
+                                <ObjectStatus
+                                    text="{LastOutreachStatus}"
+                                    state="{= ${LastOutreachStatus} === 'SENT' ? 'Success' : (${LastOutreachStatus} === 'PENDING' ? 'Warning' : 'None')}"/>
+                                <Text 
+                                    text="{
+                                        path: 'lastOutreachAt',
+                                        formatter: '.formatter.formatDate'
+                                    }" 
+                                    class="sapUiTinyMarginTop"/>
+                            </VBox>
+                            
+                            <!-- Contact Email -->
+                            <Link 
+                                text="{ContactEmail}" 
+                                href="mailto:{ContactEmail}"
+                                tooltip="Click to send email to {ContactEmail}"/>
+                            
+                            <!-- Urgency/Criticality -->
+                            <ObjectStatus
+                                text="{= ${criticality} >= 3 ? 'HIGH' : (${criticality} >= 2 ? 'MEDIUM' : 'LOW')}"
+                                state="{= ${criticality} >= 3 ? 'Error' : (${criticality} >= 2 ? 'Warning' : 'Success')}"
+                                icon="{= ${criticality} >= 3 ? 'sap-icon://high-priority' : (${criticality} >= 2 ? 'sap-icon://status-critical' : 'sap-icon://status-positive')}"
+                                tooltip="Criticality Level: {criticality}/3"/>
+                            
+                            <!-- Outreach Draft Preview -->
+                            <Text 
+                                text="{= ${latestOutreachDraft} ? ${latestOutreachDraft}.substring(0, 60) + '...' : 'No draft'}" 
+                                maxLines="2"
+                                tooltip="{latestOutreachDraft}"/>
+                            
+                            <!-- Quick Actions -->
+                            <HBox>
+                                <Button 
+                                    icon="sap-icon://email" 
+                                    type="Transparent"
+                                    press="onQuickSendOutreach"
+                                    tooltip="Quick send outreach to {PayerName}"/>
+                                <Button 
+                                    icon="sap-icon://phone" 
+                                    type="Transparent"
+                                    press="onQuickCall"
+                                    tooltip="Call {ContactPhone}"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+</mvc:View>

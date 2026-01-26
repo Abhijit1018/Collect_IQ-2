@@ -1,4 +1,4 @@
-using CollectIQService as service from '../../srv/service';
+using CollectiqService as service from '../srv/collectiq-service';
 
 annotate service.Payers with @(
     UI.LineItem : [
@@ -13,9 +13,9 @@ annotate service.Payers with @(
         },
         { $Type: 'UI.DataField', Value: LastOutreachStatus, Label: 'Outreach Status' },
         { $Type: 'UI.DataField', Value: lastOutreachAt, Label: 'Last Contacted' },
-        { $Type : 'UI.DataFieldForAction', Action : 'CollectIQService.syncAR', Label : 'Sync AR Data' },
-        { $Type : 'UI.DataFieldForAction', Action : 'CollectIQService.generateOutreach', Label : 'Generate AI Draft' },
-        { $Type : 'UI.DataFieldForAction', Action : 'CollectIQService.sendOutreach', Label : 'Send Outreach' }
+        { $Type : 'UI.DataFieldForAction', Action : 'CollectiqService.syncAR', Label : 'Sync AR Data' },
+        { $Type : 'UI.DataFieldForAction', Action : 'CollectiqService.generateOutreach', Label : 'Generate AI Draft' },
+        { $Type : 'UI.DataFieldForAction', Action : 'CollectiqService.sendOutreach', Label : 'Send Outreach' }
     ],
 
     UI.Facets : [
