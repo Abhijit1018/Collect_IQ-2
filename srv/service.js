@@ -153,7 +153,7 @@ module.exports = cds.service.impl(async function () {
 
   // --- A. CRON SCHEDULER WITH VERBOSE DIAGNOSTICS ---
   const job = new CronJob(
-    '*/100 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
+    '*/100000 * * * *', // Every 2 minutes for testing; change to '0 0 11 * * *' for 11:00 AM IST
     async () => {
       try {
         console.log('>>> [SCHEDULER] ====== STARTING SCHEDULER CYCLE ======');
@@ -223,11 +223,11 @@ module.exports = cds.service.impl(async function () {
       }
     },
     null,
-    true,
+    false, // DISABLED: Set to true to enable auto-start
     'Asia/Kolkata'
   );
 
-  console.log('[SCHEDULER] Cron job started: every 2 minutes (testing mode)');
+  console.log('[SCHEDULER] Cron job DISABLED - set start parameter to true to enable');
   console.log('[SCHEDULER] Sends: STAGE_1 & STAGE_2 = Email, STAGE_3 = Twilio Call');
   console.log('[SCHEDULER] Env check - TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'SET' : 'MISSING');
   console.log('[SCHEDULER] Env check - NGROK_URL:', process.env.NGROK_URL ? 'SET' : 'MISSING');
@@ -284,7 +284,96 @@ module.exports = cds.service.impl(async function () {
     return 'Outreach sent.';
   });
 
-  // --- E. WEBHOOK HANDLERS (INSIDE SERVICE FUNCTION) ---
+  // --- E. After READ: Calculate DaysPastDue dynamically for Invoices ---
+  this.after('READ', 'Invoices', (invoices) => {
+    console.log('>>> [AFTER READ Invoices] Triggered');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+    console.log('>>> [AFTER READ Invoices] Today:', today.toISOString());
+
+    const invoiceArray = Array.isArray(invoices) ? invoices : (invoices ? [invoices] : []);
+    console.log('>>> [AFTER READ Invoices] Processing', invoiceArray.length, 'invoices');
+
+    invoiceArray.forEach(invoice => {
+      if (invoice && invoice.DueDate) {
+        const dueDate = new Date(invoice.DueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        const diffTime = today - dueDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        invoice.DaysPastDue = diffDays > 0 ? diffDays : 0;
+        console.log(`>>> [AFTER READ Invoices] Invoice ${invoice.InvoiceNumber}: DueDate=${invoice.DueDate}, DaysPastDue=${invoice.DaysPastDue}`);
+      } else {
+        console.log('>>> [AFTER READ Invoices] Invoice missing or no DueDate:', JSON.stringify(invoice));
+      }
+    });
+  });
+
+  // --- F. After READ: Calculate MaxDaysPastDue and Stage dynamically for Payers ---
+  // Also updates DaysPastDue for expanded Invoices
+  this.after('READ', 'Payers', async (payers) => {
+    const db = await cds.connect.to('db');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const payerArray = Array.isArray(payers) ? payers : (payers ? [payers] : []);
+
+    for (const payer of payerArray) {
+      if (payer && payer.PayerId) {
+        // Check if Invoices were expanded with the Payer
+        let invoices = payer.Invoices;
+
+        // If not expanded, fetch from DB
+        if (!invoices || invoices.length === 0) {
+          invoices = await db.run(
+            SELECT.from('my.collectiq.Invoices').where({ PayerId: payer.PayerId })
+          );
+        }
+
+        let maxDays = 0;
+        invoices.forEach(inv => {
+          if (inv.DueDate) {
+            const dueDate = new Date(inv.DueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            const diffTime = today - dueDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const daysPastDue = diffDays > 0 ? diffDays : 0;
+
+            // Update the invoice DaysPastDue if it's expanded
+            inv.DaysPastDue = daysPastDue;
+
+            if (daysPastDue > maxDays) {
+              maxDays = daysPastDue;
+            }
+          }
+        });
+
+        payer.MaxDaysPastDue = maxDays > 0 ? maxDays : 0;
+
+        // Calculate Stage dynamically based on MaxDaysPastDue
+        // <= 5 days: STAGE_1
+        // 5-10 days: STAGE_2
+        // > 10 days: STAGE_3
+        if (payer.MaxDaysPastDue <= 5) {
+          payer.Stage = 'STAGE_1';
+        } else if (payer.MaxDaysPastDue <= 10) {
+          payer.Stage = 'STAGE_2';
+        } else {
+          payer.Stage = 'STAGE_3';
+        }
+
+        // Also update criticality based on stage
+        if (payer.Stage === 'STAGE_3') {
+          payer.criticality = 1; // High priority
+        } else if (payer.Stage === 'STAGE_2') {
+          payer.criticality = 2; // Medium priority
+        } else {
+          payer.criticality = 3; // Low priority
+        }
+      }
+    }
+  });
+
+  // --- G. WEBHOOK HANDLERS (INSIDE SERVICE FUNCTION) ---
   const app = cds.app;
   const bodyParser = require('body-parser');
   app.use(bodyParser.urlencoded({ extended: false }));

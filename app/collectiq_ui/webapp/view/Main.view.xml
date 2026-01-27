@@ -47,7 +47,7 @@
                 <ToolbarSpacer/>
                 <Button 
                     id="generateOutreachBtn"
-                    text="Generate Outreach for All" 
+                    text="Generate Outreach" 
                     icon="sap-icon://create" 
                     type="Emphasized"
                     press="onGenerateOutreachAll"
@@ -55,7 +55,7 @@
                     tooltip="Create draft outreach messages for all customers with outstanding balances"/>
                 <Button 
                     id="sendOutreachBtn"
-                    text="Send Outreach to All" 
+                    text="Send Outreach" 
                     icon="sap-icon://email" 
                     type="Accept"
                     press="onSendOutreachAll"
@@ -114,9 +114,7 @@
                     <Column width="14%" tooltip="Primary contact email address">
                         <Text text="Contact"/>
                     </Column>
-                    <Column width="6%" hAlign="Center" tooltip="Urgency based on days overdue">
-                        <Text text="Urgency"/>
-                    </Column>
+
                     <Column width="18%" tooltip="Latest outreach draft message preview">
                         <Text text="Outreach Draft"/>
                     </Column>
@@ -146,10 +144,10 @@
                             <ObjectNumber
                                 number="{
                                     path: 'TotalPastDue',
-                                    formatter: '.formatter.formatCompact'
+                                    formatter: '.formatter.formatCurrency'
                                 }"
                                 unit="{Currency}"
-                                state="{= ${TotalPastDue} > 10000 ? 'Error' : (${TotalPastDue} > 5000 ? 'Warning' : 'Success')}"
+                                state="{= ${TotalPastDue} > 50000 ? 'Error' : (${TotalPastDue} > 30000 ? 'Warning' : 'Success')}"
                                 tooltip="Total overdue: {TotalPastDue} {Currency}"/>
                             
                             <!-- Days Past Due -->
@@ -183,12 +181,7 @@
                                 href="mailto:{ContactEmail}"
                                 tooltip="Click to send email to {ContactEmail}"/>
                             
-                            <!-- Urgency/Criticality -->
-                            <ObjectStatus
-                                text="{= ${criticality} >= 3 ? 'HIGH' : (${criticality} >= 2 ? 'MEDIUM' : 'LOW')}"
-                                state="{= ${criticality} >= 3 ? 'Error' : (${criticality} >= 2 ? 'Warning' : 'Success')}"
-                                icon="{= ${criticality} >= 3 ? 'sap-icon://high-priority' : (${criticality} >= 2 ? 'sap-icon://status-critical' : 'sap-icon://status-positive')}"
-                                tooltip="Criticality Level: {criticality}/3"/>
+
                             
                             <!-- Outreach Draft Preview -->
                             <Text 

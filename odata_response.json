@@ -1,0 +1,41 @@
+﻿{
+    "@odata.context":  "$metadata#Payers",
+    "value":  [
+                  {
+                      "createdAt":  "2026-01-27T17:10:44.024Z",
+                      "createdBy":  "anonymous",
+                      "modifiedAt":  "2026-01-27T17:10:44.024Z",
+                      "modifiedBy":  "anonymous",
+                      "PayerId":  "1001",
+                      "PayerName":  "Reliance Industries",
+                      "TotalPastDue":  50000,
+                      "MaxDaysPastDue":  3,
+                      "Stage":  "STAGE_1",
+                      "ContactEmail":  "gaurriya1611@gmail.com",
+                      "ContactPhone":  "+919265218188",
+                      "Currency":  "USD",
+                      "LastOutreachStatus":  "NONE",
+                      "lastOutreachAt":  null,
+                      "latestOutreachDraft":  null,
+                      "criticality":  3
+                  },
+                  {
+                      "createdAt":  "2026-01-27T17:10:44.024Z",
+                      "createdBy":  "anonymous",
+                      "modifiedAt":  "2026-01-27T17:10:44.024Z",
+                      "modifiedBy":  "anonymous",
+                      "PayerId":  "1002",
+                      "PayerName":  "Tata Motors",
+                      "TotalPastDue":  120000,
+                      "MaxDaysPastDue":  8,
+                      "Stage":  "STAGE_2",
+                      "ContactEmail":  "abhijeetrathore104@gmail.com",
+                      "ContactPhone":  "+919376481607",
+                      "Currency":  "USD",
+                      "LastOutreachStatus":  "NONE",
+                      "lastOutreachAt":  null,
+                      "latestOutreachDraft":  null,
+                      "criticality":  2
+                  }
+              ]
+}

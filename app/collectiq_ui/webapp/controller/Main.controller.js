@@ -35,13 +35,29 @@ sap.ui.define([
             var oBinding = oTable.getBinding("items");
             var aFilters = [];
 
-            // Search Filter
+            // Search Filter - case-insensitive
             if (sQuery) {
+                var sLowerQuery = sQuery.toLowerCase();
                 aFilters.push(new Filter({
                     filters: [
-                        new Filter("PayerName", FilterOperator.Contains, sQuery),
-                        new Filter("PayerId", FilterOperator.Contains, sQuery),
-                        new Filter("ContactEmail", FilterOperator.Contains, sQuery)
+                        new Filter({
+                            path: "PayerName",
+                            operator: FilterOperator.Contains,
+                            value1: sQuery,
+                            caseSensitive: false
+                        }),
+                        new Filter({
+                            path: "PayerId",
+                            operator: FilterOperator.Contains,
+                            value1: sQuery,
+                            caseSensitive: false
+                        }),
+                        new Filter({
+                            path: "ContactEmail",
+                            operator: FilterOperator.Contains,
+                            value1: sQuery,
+                            caseSensitive: false
+                        })
                     ],
                     and: false
                 }));
@@ -87,14 +103,28 @@ sap.ui.define([
 
         onGenerateOutreachAll: function () {
             var that = this;
+            var oTable = this.byId("customerTable");
+            var aSelectedItems = oTable.getSelectedItems();
+
+            if (aSelectedItems.length === 0) {
+                MessageBox.warning("Please select at least one customer to generate outreach.");
+                return;
+            }
+
             var oModel = this.getView().getModel();
+            var aPromises = [];
 
-            var oActionBinding = oModel.bindContext("/CollectIQService.generateOutreachForAll(...)");
+            aSelectedItems.forEach(function (oItem) {
+                var oContext = oItem.getBindingContext();
+                var sPath = oContext.getPath();
+                var oActionBinding = oModel.bindContext(sPath + "/CollectIQService.generateOutreach(...)");
+                aPromises.push(oActionBinding.execute());
+            });
 
-            oActionBinding.execute().then(function () {
-                var sMessage = oActionBinding.getBoundContext().getObject().value;
-                MessageToast.show(sMessage || "Outreach generated for all customers");
+            Promise.all(aPromises).then(function () {
+                MessageToast.show("Outreach generated for " + aSelectedItems.length + " customer(s)");
                 that.byId("customerTable").getBinding("items").refresh();
+                oTable.removeSelections();
             }).catch(function (oError) {
                 MessageBox.error("Error generating outreach: " + oError.message);
             });
@@ -102,14 +132,28 @@ sap.ui.define([
 
         onSendOutreachAll: function () {
             var that = this;
+            var oTable = this.byId("customerTable");
+            var aSelectedItems = oTable.getSelectedItems();
+
+            if (aSelectedItems.length === 0) {
+                MessageBox.warning("Please select at least one customer to send outreach.");
+                return;
+            }
+
             var oModel = this.getView().getModel();
+            var aPromises = [];
 
-            var oActionBinding = oModel.bindContext("/CollectIQService.sendOutreachToAll(...)");
+            aSelectedItems.forEach(function (oItem) {
+                var oContext = oItem.getBindingContext();
+                var sPath = oContext.getPath();
+                var oActionBinding = oModel.bindContext(sPath + "/CollectIQService.sendOutreach(...)");
+                aPromises.push(oActionBinding.execute());
+            });
 
-            oActionBinding.execute().then(function () {
-                var sMessage = oActionBinding.getBoundContext().getObject().value;
-                MessageToast.show(sMessage || "Outreach sent to all customers");
+            Promise.all(aPromises).then(function () {
+                MessageToast.show("Outreach sent to " + aSelectedItems.length + " customer(s)");
                 that.byId("customerTable").getBinding("items").refresh();
+                oTable.removeSelections();
             }).catch(function (oError) {
                 MessageBox.error("Error sending outreach: " + oError.message);
             });

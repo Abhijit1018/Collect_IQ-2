@@ -11,7 +11,9 @@ sap.ui.define([], function () {
             if (value === null || value === undefined) {
                 return "0.00";
             }
-            return parseFloat(value).toLocaleString('en-US', {
+            // Remove commas if the value is a string (already formatted)
+            var cleanValue = String(value).replace(/,/g, '');
+            return parseFloat(cleanValue).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
@@ -26,7 +28,9 @@ sap.ui.define([], function () {
             if (value === null || value === undefined) {
                 return "0";
             }
-            var fValue = parseFloat(value);
+            // Remove commas if the value is a string (already formatted)
+            var cleanValue = String(value).replace(/,/g, '');
+            var fValue = parseFloat(cleanValue);
             if (isNaN(fValue)) {
                 return "0";
             }
