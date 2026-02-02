@@ -42,7 +42,7 @@
 .collectiqHeader {
     background: #004488 !important;
     /* Force Solid Blue */
-    padding: 8px 16px;
+    padding: 8px 32px;
     border-bottom: 2px solid #003366;
 }
 
@@ -58,6 +58,12 @@
     color: white !important;
     font-weight: 700;
     font-size: 1.5rem !important;
+    margin-right: 2rem;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: 1.5rem !important;
+    padding-top: 2px;
+    /* Fine-tuning */
 }
 
 .headerSearch .sapMInputBaseInner {
@@ -175,11 +181,18 @@
 .statsCard {
     background: white;
     border-radius: var(--border-radius);
-    padding: 20px;
-    box-shadow: var(--shadow);
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    /* Much darker shadow */
     border-left: 5px solid var(--text-secondary);
     /* Default border */
     transition: transform 0.2s;
+    width: 100%;
+    min-height: 8rem;
+    /* Balanced height for uniformity */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .statsCard:hover {

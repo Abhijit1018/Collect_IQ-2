@@ -66,13 +66,6 @@
                     <Label text="Currency" class="sapUiTinyMarginBottom"/>
                     <Text text="{Currency}" tooltip="Default billing currency"/>
                 </VBox>
-                <VBox class="sapUiMediumMarginEnd" width="150px">
-                    <Label text="Criticality" class="sapUiTinyMarginBottom"/>
-                    <ObjectStatus 
-                        text="{= ${criticality} >= 3 ? 'HIGH' : (${criticality} >= 2 ? 'MEDIUM' : 'LOW')}"
-                        state="{= ${criticality} >= 3 ? 'Error' : (${criticality} >= 2 ? 'Warning' : 'Success')}"
-                        tooltip="Urgency Level: {criticality}/3"/>
-                </VBox>
             </l:HorizontalLayout>
         </uxap:headerContent>
         
@@ -152,7 +145,7 @@
                                     <OverflowToolbar>
                                         <Title text="Invoice History" level="H4"/>
                                         <ToolbarSpacer/>
-                                        <Button icon="sap-icon://add" text="Add Invoice" tooltip="Create a new invoice for this customer"/>
+                                        <Button icon="sap-icon://add" text="Add Invoice" press="onAddInvoice" tooltip="Create a new invoice for this customer"/>
                                     </OverflowToolbar>
                                 </headerToolbar>
                                 

@@ -16,13 +16,13 @@
         <customHeader>
             <Bar class="collectiqHeader">
                 <contentLeft>
-                    <HBox alignItems="Center">
+                    <HBox alignItems="Center" height="100%" class="sapUiLargeMarginEnd">
                         <core:Icon 
                             src="sap-icon://customer-financial-fact-sheet" 
                             size="1.5rem"
                             color="#fff"
                             class="sapUiSmallMarginEnd"/>
-                        <Title text="CollectiQ" level="H3" class="headerTitle" tooltip="Customer Collection Management System"/>
+                        <Title text="CollectIQ" level="H3" class="headerTitle" tooltip="Customer Collection Management System"/>
                     </HBox>
                 </contentLeft>
                 <contentMiddle>
@@ -89,17 +89,17 @@
                 growingThreshold="20"
                 mode="MultiSelect"
                 itemPress="onItemPress"
-                class="collectiqTable sapUiMediumMargin"
+                class="collectiqTable sapUiMediumMarginBegin sapUiMediumMarginEnd sapUiMediumMarginBottom sapUiSmallMarginTop"
                 tooltip="Click on any row to see full customer details">
                 
                 <columns>
-                    <Column width="7%" tooltip="Unique customer identifier">
+                    <Column width="7%" hAlign="Center" tooltip="Unique customer identifier">
                         <Text text="Customer ID"/>
                     </Column>
-                    <Column width="14%" tooltip="Customer company name and contact phone">
+                    <Column width="14%" hAlign="Center" tooltip="Customer company name and contact phone">
                         <Text text="Customer"/>
                     </Column>
-                    <Column width="10%" hAlign="End" tooltip="Total outstanding amount past due">
+                    <Column width="10%" hAlign="Center" tooltip="Total outstanding amount past due">
                         <Text text="Past Due"/>
                     </Column>
                     <Column width="6%" hAlign="Center" tooltip="Number of overdue days for oldest invoice">
@@ -108,14 +108,14 @@
                     <Column width="8%" hAlign="Center" tooltip="Current collection stage">
                         <Text text="Stage"/>
                     </Column>
-                    <Column width="10%" tooltip="Last outreach status and date">
+                    <Column width="10%" hAlign="Center" tooltip="Last outreach status and date">
                         <Text text="Last Outreach"/>
                     </Column>
-                    <Column width="14%" tooltip="Primary contact email address">
+                    <Column width="14%" hAlign="Center" tooltip="Primary contact email address">
                         <Text text="Contact"/>
                     </Column>
 
-                    <Column width="18%" tooltip="Latest outreach draft message preview">
+                    <Column width="18%" hAlign="Center" tooltip="Latest outreach draft message preview">
                         <Text text="Outreach Draft"/>
                     </Column>
                     <Column width="5%" hAlign="Center" tooltip="Quick actions for this customer">

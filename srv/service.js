@@ -35,7 +35,7 @@ module.exports = cds.service.impl(async function () {
   const sapS4 = await cds.connect.to('ZUI_COLLECTIQ_V4');
 
   // --- HELPER FUNCTIONS ---
-  const { SELECT, UPDATE, UPSERT } = cds.ql;
+  const { SELECT, UPDATE, UPSERT, INSERT } = cds.ql;
 
   async function _generateOutreach(payerId) {
     console.log(`>>> [generateOutreach] Processing PayerId: ${payerId}`);
