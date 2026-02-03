@@ -24,6 +24,7 @@
     "express": "^4.22.1",
     "express-ws": "^5.0.2",
     "ngrok": "^5.0.0-beta.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
     "openai": "^6.16.0",
     "twilio": "^5.11.2",

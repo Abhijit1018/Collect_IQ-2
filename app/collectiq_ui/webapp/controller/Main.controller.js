@@ -101,6 +101,16 @@ sap.ui.define([
             });
         },
 
+        onNavToDashboard: function () {
+            var oRouter = this.getOwnerComponent().getRouter();
+            oRouter.navTo("dashboard");
+        },
+
+        onNavToFollowups: function () {
+            var oRouter = this.getOwnerComponent().getRouter();
+            oRouter.navTo("followups");
+        },
+
         onGenerateOutreachAll: function () {
             var that = this;
             var oTable = this.byId("customerTable");

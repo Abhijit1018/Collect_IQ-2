@@ -43,7 +43,8 @@
                 "sap.m": {},
                 "sap.f": {},
                 "sap.uxap": {},
-                "sap.ui.core": {}
+                "sap.ui.core": {},
+                "sap.viz": {}
             }
         },
         "contentDensities": {
@@ -88,6 +89,21 @@
                     "name": "detail",
                     "pattern": "customer/{PayerId}",
                     "target": "detail"
+                },
+                {
+                    "name": "dashboard",
+                    "pattern": "dashboard",
+                    "target": "dashboard"
+                },
+                {
+                    "name": "callResults",
+                    "pattern": "calls/{callId}",
+                    "target": "callResults"
+                },
+                {
+                    "name": "followups",
+                    "pattern": "followups",
+                    "target": "followups"
                 }
             ],
             "targets": {
@@ -98,6 +114,18 @@
                 "detail": {
                     "viewName": "Detail",
                     "viewLevel": 2
+                },
+                "dashboard": {
+                    "viewName": "StatisticsDashboard",
+                    "viewLevel": 1
+                },
+                "callResults": {
+                    "viewName": "CallResults",
+                    "viewLevel": 2
+                },
+                "followups": {
+                    "viewName": "ScheduledFollowups",
+                    "viewLevel": 1
                 }
             }
         }

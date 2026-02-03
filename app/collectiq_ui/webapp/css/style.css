@@ -72,6 +72,36 @@
     border: none;
 }
 
+/* Header Navigation Buttons */
+.headerNavButton .sapMBtnInner {
+    background-color: white !important;
+    border: 1px solid white !important;
+    color: var(--primary-color) !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    /* Reset potential SAP defaults */
+    padding-bottom: 0 !important;
+}
+
+.headerNavButton:hover .sapMBtnInner {
+    background-color: #f0f9ff !important;
+    color: var(--primary-dark) !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4) !important;
+}
+
+.headerNavButton .sapMBtnIcon {
+    color: var(--primary-color) !important;
+}
+
+.headerNavButton:hover .sapMBtnIcon {
+    color: var(--primary-dark) !important;
+}
+
 /* Action Toolbar */
 .actionToolbar {
     background: var(--bg-card);

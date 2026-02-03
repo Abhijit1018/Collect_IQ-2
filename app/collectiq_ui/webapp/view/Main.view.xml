@@ -35,6 +35,18 @@
                         tooltip="Search customers by name, ID, or email address"/>
                 </contentMiddle>
                 <contentRight>
+                    <Button 
+                        text="Dashboard" 
+                        icon="sap-icon://barchart"
+                        press="onNavToDashboard"
+                        tooltip="View Statistics Dashboard"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
+                    <Button 
+                        text="Follow-ups" 
+                        icon="sap-icon://calendar"
+                        press="onNavToFollowups"
+                        tooltip="View Scheduled Follow-ups"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
                     <Avatar initials="JW" displaySize="S" tooltip="Current User: John Watson"/>
                 </contentRight>
             </Bar>
