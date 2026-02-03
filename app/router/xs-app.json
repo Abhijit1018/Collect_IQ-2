@@ -1,0 +1,15 @@
+{
+  "welcomeFile": "/collectiqui/index.html",
+  "routes": [
+    {
+      "source": "^/collectiqui/(.*)$",
+      "target": "$1",
+      "service": "html5-apps-repo-rt"
+    },
+    {
+      "source": "^/odata/v4/catalog/(.*)$",
+      "destination": "srv-api",
+      "csrfProtection": false
+    }
+  ]
+}

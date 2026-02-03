@@ -1,0 +1,174 @@
+<mvc:View
+    controllerName="my.collectiq.controller.CallResults"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.ui.layout.form"
+    height="100%">
+    
+    <Page 
+        id="callResultsPage" 
+        title="Call Results"
+        showNavButton="true"
+        navButtonPress="onNavBack">
+        
+        <content>
+            <ScrollContainer height="100%" vertical="true">
+                
+                <!-- Call Summary Card -->
+                <Panel 
+                    headerText="Call Summary" 
+                    class="sapUiSmallMargin">
+                    <f:SimpleForm
+                        layout="ResponsiveGridLayout"
+                        editable="false">
+                        <f:content>
+                            <Label text="Payer Name"/>
+                            <Text text="{call>/payerInfo/PayerName}"/>
+                            
+                            <Label text="Call Date"/>
+                            <Text text="{
+                                path: 'call>/call/callDate',
+                                type: 'sap.ui.model.type.DateTime',
+                                formatOptions: { 
+                                    pattern: 'dd/MM/yyyy HH:mm' 
+                                }
+                            }"/>
+                            
+                            <Label text="Duration"/>
+                            <Text text="{
+                                parts: ['call>/call/duration'],
+                                formatter: '.formatDuration'
+                            }"/>
+                            
+                            <!-- Assuming we take the first invoice or aggregate -->
+                            <!-- <Label text="Invoice Number"/>
+                            <Text text="{call>/invoiceInfo/0/InvoiceNumber}"/> -->
+                            
+                            <Label text="Outstanding Amount"/>
+                             <Text text="{call>/payerInfo/TotalPastDue}"/>
+                        </f:content>
+                    </f:SimpleForm>
+                </Panel>
+                
+                <!-- Call Conclusion Card -->
+                <Panel 
+                    headerText="Call Conclusion" 
+                    class="sapUiSmallMargin">
+                    <VBox class="sapUiSmallMargin">
+                        <Text 
+                            text="{call>/call/callConclusion}"
+                            class="sapUiSmallMarginBottom"/>
+                        
+                        <!-- Payment Promise -->
+                        <VBox visible="{= ${call>/call/paymentPromiseDate} !== null}">
+                            <HBox alignItems="Center" class="sapUiTinyMarginBottom">
+                                <core:Icon 
+                                    src="sap-icon://calendar" 
+                                    color="green"
+                                    class="sapUiTinyMarginEnd"/>
+                                <Label text="Payment Promised:"/>
+                                <Text 
+                                    text="{
+                                        path: 'call>/call/paymentPromiseDate',
+                                        type: 'sap.ui.model.type.Date',
+                                        formatOptions: { 
+                                            pattern: 'EEEE, MMMM dd, yyyy' 
+                                        }
+                                    }"
+                                    class="sapUiSmallMarginBegin"/>
+                            </HBox>
+                        </VBox>
+                        
+                        <!-- Recommended Action -->
+                        <VBox class="sapUiSmallMarginTop">
+                            <Label text="Recommended Action:" class="sapUiTinyMarginBottom"/>
+                            <MessageStrip
+                                text="{call>/call/recommendedAction}"
+                                type="Information"
+                                showIcon="true"/>
+                        </VBox>
+                    </VBox>
+                </Panel>
+                
+                <!-- Sentiment Analysis -->
+                <Panel 
+                    headerText="Sentiment Analysis" 
+                    class="sapUiSmallMargin">
+                    <VBox class="sapUiSmallMargin">
+                        <ProgressIndicator
+                            percentValue="{
+                                parts: ['call>/call/sentimentScore'],
+                                formatter: '.formatSentimentPercent'
+                            }"
+                            displayValue="{
+                                parts: ['call>/call/sentimentScore'],
+                                formatter: '.formatSentimentLabel'
+                            }"
+                            state="{
+                                parts: ['call>/call/sentimentScore'],
+                                formatter: '.formatSentimentState'
+                            }"
+                            width="100%"/>
+                        <Text 
+                            text="{
+                                parts: ['call>/call/sentimentScore'],
+                                formatter: '.formatSentimentDescription'
+                            }"
+                            class="sapUiSmallMarginTop"/>
+                    </VBox>
+                </Panel>
+                
+                <!-- Transcript Viewer -->
+                <Panel 
+                    headerText="Call Transcript" 
+                    class="sapUiSmallMargin"
+                    expandable="true"
+                    expanded="false">
+                    <l:Grid defaultSpan="L6 M12 S12">
+                        
+                        <!-- Agent Transcript (Placeholder if not separated in DB) -->
+                        <VBox class="sapUiSmallMargin">
+                            <TextArea
+                                value="{call>/call/fullTranscript}"
+                                rows="15"
+                                editable="false"
+                                width="100%"/>
+                        </VBox>
+                    </l:Grid>
+                </Panel>
+                
+                <!-- Key Points -->
+                <Panel 
+                    headerText="Key Points" 
+                    class="sapUiSmallMargin"
+                    visible="{= ${call>/call/keyPoints} !== null}">
+                    <List items="{
+                        path: 'call>/keyPointsArray'
+                    }">
+                        <StandardListItem 
+                            title="{call>}"
+                            icon="sap-icon://bullet-text"/>
+                    </List>
+                </Panel>
+                
+            </ScrollContainer>
+        </content>
+        
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Button 
+                    text="Export Transcript" 
+                    icon="sap-icon://download"
+                    press="onExportTranscript"/>
+                <Button 
+                    text="Schedule Follow-up" 
+                    icon="sap-icon://appointment"
+                    type="Emphasized"
+                    press="onScheduleFollowUp"/>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

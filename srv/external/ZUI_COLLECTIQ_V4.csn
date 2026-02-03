@@ -1,0 +1,373 @@
+{
+ "meta": {
+  "creator": "cds-dk 9.5.0"
+ },
+ "$version": "2.0",
+ "definitions": {
+  "ZUI_COLLECTIQ_V4": {
+   "kind": "service",
+   "@cds.external": true,
+   "@CodeList.CurrencyCodes.Url": "../../../../default/iwbep/common/0001/$metadata",
+   "@CodeList.CurrencyCodes.CollectionPath": "Currencies",
+   "@Common.ApplyMultiUnitBehaviorForSortingAndFiltering": true,
+   "@Capabilities.FilterFunctions": [
+    "eq",
+    "ne",
+    "gt",
+    "ge",
+    "lt",
+    "le",
+    "and",
+    "or",
+    "contains",
+    "startswith",
+    "endswith",
+    "any",
+    "all"
+   ],
+   "@SAP__support.TechnicalInfoLinks.Url": "../../../../default/iwbep/common/0001/$metadata",
+   "@SAP__support.TechnicalInfoLinks.FunctionImport": "GetTechnicalInfoLinks",
+   "@Capabilities.SupportedFormats": [
+    "application/json",
+    "application/pdf"
+   ],
+   "@PDF.Features.DocumentDescriptionReference": "../../../../default/iwbep/common/0001/$metadata",
+   "@PDF.Features.DocumentDescriptionCollection": "MyDocumentDescriptions",
+   "@PDF.Features.ArchiveFormat": true,
+   "@PDF.Features.Border": true,
+   "@PDF.Features.CoverPage": true,
+   "@PDF.Features.FitToPage": true,
+   "@PDF.Features.FontName": true,
+   "@PDF.Features.FontSize": true,
+   "@PDF.Features.HeaderFooter": true,
+   "@PDF.Features.IANATimezoneFormat": true,
+   "@PDF.Features.Margin": true,
+   "@PDF.Features.Padding": true,
+   "@PDF.Features.ResultSizeDefault": 20000,
+   "@PDF.Features.ResultSizeMaximum": 20000,
+   "@PDF.Features.Signature": true,
+   "@PDF.Features.TextDirectionLayout": true,
+   "@PDF.Features.Treeview": true,
+   "@PDF.Features.UploadToFileShare": true,
+   "@Capabilities.KeyAsSegmentSupported": true,
+   "@Capabilities.AsynchronousRequestsSupported": true
+  },
+  "ZUI_COLLECTIQ_V4.Invoice": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "InvoiceId": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true,
+     "@Common.Label": "UUID",
+     "@Common.QuickInfo": "16 Byte UUID in 16 Bytes (Raw Format)"
+    },
+    "PayerId": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "InvoiceNumber": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "InvoiceAmount": {
+     "type": "cds.Decimal",
+     "precision": 15,
+     "notNull": true,
+     "@Measures.ISOCurrency": {
+      "=": "Currency"
+     }
+    },
+    "DueDate": {
+     "type": "cds.Date"
+    },
+    "DaysPastDue": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "Currency": {
+     "type": "cds.String",
+     "length": 5,
+     "notNull": true,
+     "@Common.IsCurrency": true
+    },
+    "_Payer": {
+     "type": "cds.Association",
+     "target": "ZUI_COLLECTIQ_V4.Payer",
+     "cardinality": {
+      "max": 1
+     },
+     "keys": []
+    }
+   },
+   "@Common.Label": "Invoice View Entity",
+   "@Capabilities.NavigationRestrictions.RestrictedProperties": [
+    {
+     "NavigationProperty": {
+      "=": "_Payer"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
+     }
+    }
+   ],
+   "@Capabilities.SearchRestrictions.Searchable": false,
+   "@Capabilities.InsertRestrictions.Insertable": false,
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
+   "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
+    "_Payer"
+   ],
+   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "InvoiceAmount"
+     },
+     "AllowedExpressions": "MultiValue"
+    }
+   ]
+  },
+  "ZUI_COLLECTIQ_V4.OutreachHistory": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "OutreachId": {
+     "key": true,
+     "type": "cds.UUID",
+     "notNull": true,
+     "@Common.Label": "UUID",
+     "@Common.QuickInfo": "16 Byte UUID in 16 Bytes (Raw Format)"
+    },
+    "PayerId": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "StageAtGeneration": {
+     "type": "cds.String",
+     "length": 15,
+     "notNull": true
+    },
+    "OutreachType": {
+     "type": "cds.String",
+     "length": 15,
+     "notNull": true
+    },
+    "BodyText": {
+     "type": "cds.String",
+     "notNull": true
+    },
+    "Status": {
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "CreatedAt": {
+     "type": "cds.Decimal",
+     "precision": 21,
+     "scale": 7,
+     "notNull": true
+    },
+    "_Payer": {
+     "type": "cds.Association",
+     "target": "ZUI_COLLECTIQ_V4.Payer",
+     "cardinality": {
+      "max": 1
+     },
+     "keys": []
+    }
+   },
+   "@Common.Label": "Outreach History View Entity",
+   "@Capabilities.NavigationRestrictions.RestrictedProperties": [
+    {
+     "NavigationProperty": {
+      "=": "_Payer"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
+     }
+    }
+   ],
+   "@Capabilities.SearchRestrictions.Searchable": false,
+   "@Capabilities.FilterRestrictions.Filterable": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "BodyText"
+     },
+     "AllowedExpressions": "SearchExpression"
+    }
+   ],
+   "@Capabilities.SortRestrictions.NonSortableProperties": [
+    "BodyText"
+   ],
+   "@Capabilities.InsertRestrictions.Insertable": false,
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
+   "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
+    "_Payer"
+   ],
+   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true
+  },
+  "ZUI_COLLECTIQ_V4.Payer": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "elements": {
+    "PayerId": {
+     "key": true,
+     "type": "cds.String",
+     "length": 20,
+     "notNull": true
+    },
+    "PayerName": {
+     "type": "cds.String",
+     "length": 120,
+     "notNull": true
+    },
+    "TotalPastDue": {
+     "type": "cds.Decimal",
+     "precision": 15,
+     "notNull": true,
+     "@Measures.ISOCurrency": {
+      "=": "Currency"
+     }
+    },
+    "MaxDaysPastDue": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "Stage": {
+     "type": "cds.String",
+     "length": 15,
+     "notNull": true
+    },
+    "ContactEmail": {
+     "type": "cds.String",
+     "length": 120,
+     "notNull": true
+    },
+    "ContactPhone": {
+     "type": "cds.String",
+     "length": 256,
+     "notNull": true
+    },
+    "Currency": {
+     "type": "cds.String",
+     "length": 5,
+     "notNull": true,
+     "@Common.IsCurrency": true
+    },
+    "LastOutreachStatus": {
+     "type": "cds.String",
+     "length": 30,
+     "notNull": true
+    },
+    "LastOutreachAt": {
+     "type": "cds.Decimal",
+     "precision": 21,
+     "scale": 7,
+     "notNull": true
+    },
+    "LatestOutreachDraft": {
+     "type": "cds.String",
+     "notNull": true
+    },
+    "Criticality": {
+     "type": "cds.Integer",
+     "notNull": true
+    },
+    "_Invoices": {
+     "type": "cds.Composition",
+     "target": "ZUI_COLLECTIQ_V4.Invoice",
+     "cardinality": {
+      "max": "*"
+     },
+     "on": [
+      {
+       "ref": [
+        "_Invoices",
+        "_Payer"
+       ]
+      },
+      "=",
+      {
+       "ref": [
+        "$self"
+       ]
+      }
+     ],
+     "@Common.Composition": true
+    },
+    "_OutreachHistory": {
+     "type": "cds.Composition",
+     "target": "ZUI_COLLECTIQ_V4.OutreachHistory",
+     "cardinality": {
+      "max": "*"
+     },
+     "on": [
+      {
+       "ref": [
+        "_OutreachHistory",
+        "_Payer"
+       ]
+      },
+      "=",
+      {
+       "ref": [
+        "$self"
+       ]
+      }
+     ],
+     "@Common.Composition": true
+    }
+   },
+   "@Common.Label": "Payer View Entity",
+   "@Capabilities.NavigationRestrictions.RestrictedProperties": [
+    {
+     "NavigationProperty": {
+      "=": "_Invoices"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
+     }
+    },
+    {
+     "NavigationProperty": {
+      "=": "_OutreachHistory"
+     },
+     "InsertRestrictions": {
+      "Insertable": false
+     }
+    }
+   ],
+   "@Capabilities.SearchRestrictions.Searchable": false,
+   "@Capabilities.FilterRestrictions.Filterable": true,
+   "@Capabilities.FilterRestrictions.FilterExpressionRestrictions": [
+    {
+     "Property": {
+      "=": "LatestOutreachDraft"
+     },
+     "AllowedExpressions": "SearchExpression"
+    }
+   ],
+   "@Capabilities.SortRestrictions.NonSortableProperties": [
+    "LatestOutreachDraft"
+   ],
+   "@Capabilities.InsertRestrictions.Insertable": false,
+   "@Capabilities.DeleteRestrictions.Deletable": false,
+   "@Capabilities.UpdateRestrictions.Updatable": false,
+   "@Capabilities.UpdateRestrictions.NonUpdatableNavigationProperties": [
+    "_Invoices",
+    "_OutreachHistory"
+   ],
+   "@Capabilities.UpdateRestrictions.QueryOptions.SelectSupported": true
+  }
+ }
+}

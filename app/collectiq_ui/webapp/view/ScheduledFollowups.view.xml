@@ -1,0 +1,97 @@
+<mvc:View
+    controllerName="my.collectiq.controller.ScheduledFollowups"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    height="100%">
+    
+    <Page id="followupsPage" title="Scheduled Follow-ups" showNavButton="true" navButtonPress="onNavBack">
+        <content>
+            
+            <!-- Toolbar with filters -->
+            <OverflowToolbar>
+                <Title text="Upcoming Follow-ups" level="H2"/>
+                <ToolbarSpacer/>
+                <Button 
+                    text="Schedule New" 
+                    icon="sap-icon://add"
+                    type="Emphasized"
+                    press="onScheduleNew"/>
+            </OverflowToolbar>
+            
+            <!-- List View -->
+            <Table
+                id="followupsTable"
+                items="{
+                    path: '/ScheduledFollowups',
+                    parameters: {
+                        $expand: 'payer',
+                        $filter: 'status eq \'pending\''
+                    }
+                }"
+                mode="SingleSelectMaster"
+                selectionChange="onFollowUpSelect">
+                
+                <columns>
+                    <Column width="12em">
+                        <Text text="Payer"/>
+                    </Column>
+                    <Column width="10em">
+                        <Text text="Scheduled Date"/>
+                    </Column>
+                    <Column width="8em">
+                        <Text text="Time"/>
+                    </Column>
+                    <Column minScreenWidth="Tablet" demandPopin="true">
+                        <Text text="Reason"/>
+                    </Column>
+                    <Column width="8em">
+                        <Text text="Status"/>
+                    </Column>
+                    <Column width="12em" hAlign="End">
+                        <Text text="Actions"/>
+                    </Column>
+                </columns>
+                
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <ObjectIdentifier
+                                title="{payer/PayerName}"
+                                text="{payer/company}"/>
+                            <Text text="{
+                                path: 'scheduledDate',
+                                type: 'sap.ui.model.type.Date',
+                                formatOptions: {
+                                    pattern: 'dd/MM/yyyy'
+                                }
+                            }"/>
+                            <Text text="{
+                                path: 'scheduledTime',
+                                type: 'sap.ui.model.type.Time',
+                                formatOptions: {
+                                    pattern: 'HH:mm'
+                                }
+                            }"/>
+                            <Text text="{reason}"/>
+                            <ObjectStatus
+                                text="{status}"
+                                state="{
+                                    parts: ['status'],
+                                    formatter: '.formatStatusState'
+                                }"/>
+                            <HBox justifyContent="End">
+                                <Button
+                                    icon="sap-icon://decline"
+                                    type="Transparent"
+                                    press="onCancel"
+                                    tooltip="Cancel"/>
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+            
+        </content>
+    </Page>
+</mvc:View>

@@ -1,0 +1,157 @@
+{
+    "Invoices": [
+        {
+            "InvoiceId": "inv-001-001",
+            "PayerId": "CUST001",
+            "InvoiceNumber": "INV-2025-1001",
+            "InvoiceAmount": 5250.00,
+            "DueDate": "2025-12-01",
+            "DaysPastDue": 50,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-001-002",
+            "PayerId": "CUST001",
+            "InvoiceNumber": "INV-2025-1045",
+            "InvoiceAmount": 10500.50,
+            "DueDate": "2025-12-15",
+            "DaysPastDue": 36,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-002-001",
+            "PayerId": "CUST002",
+            "InvoiceNumber": "INV-2025-0892",
+            "InvoiceAmount": 12500.00,
+            "DueDate": "2025-11-10",
+            "DaysPastDue": 71,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-002-002",
+            "PayerId": "CUST002",
+            "InvoiceNumber": "INV-2025-0945",
+            "InvoiceAmount": 20000.00,
+            "DueDate": "2025-11-25",
+            "DaysPastDue": 56,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-003-001",
+            "PayerId": "CUST003",
+            "InvoiceNumber": "INV-2025-1120",
+            "InvoiceAmount": 8200.75,
+            "DueDate": "2025-12-23",
+            "DaysPastDue": 28,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-004-001",
+            "PayerId": "CUST004",
+            "InvoiceNumber": "INV-2025-0756",
+            "InvoiceAmount": 15000.00,
+            "DueDate": "2025-10-15",
+            "DaysPastDue": 97,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-004-002",
+            "PayerId": "CUST004",
+            "InvoiceNumber": "INV-2025-0801",
+            "InvoiceAmount": 18000.00,
+            "DueDate": "2025-10-25",
+            "DaysPastDue": 87,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-004-003",
+            "PayerId": "CUST004",
+            "InvoiceNumber": "INV-2025-0850",
+            "InvoiceAmount": 12000.00,
+            "DueDate": "2025-11-05",
+            "DaysPastDue": 76,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-006-001",
+            "PayerId": "CUST006",
+            "InvoiceNumber": "INV-2025-1089",
+            "InvoiceAmount": 7300.00,
+            "DueDate": "2025-12-15",
+            "DaysPastDue": 36,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-006-002",
+            "PayerId": "CUST006",
+            "InvoiceNumber": "INV-2025-1102",
+            "InvoiceAmount": 5000.00,
+            "DueDate": "2025-12-20",
+            "DaysPastDue": 31,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-007-001",
+            "PayerId": "CUST007",
+            "InvoiceNumber": "INV-2026-0015",
+            "InvoiceAmount": 5600.25,
+            "DueDate": "2026-01-05",
+            "DaysPastDue": 15,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-008-001",
+            "PayerId": "CUST008",
+            "InvoiceNumber": "INV-2025-0978",
+            "InvoiceAmount": 15750.00,
+            "DueDate": "2025-11-25",
+            "DaysPastDue": 56,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-008-002",
+            "PayerId": "CUST008",
+            "InvoiceNumber": "INV-2025-1010",
+            "InvoiceAmount": 13000.00,
+            "DueDate": "2025-12-01",
+            "DaysPastDue": 50,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-009-001",
+            "PayerId": "CUST009",
+            "InvoiceNumber": "INV-2025-1056",
+            "InvoiceAmount": 4450.00,
+            "DueDate": "2025-12-10",
+            "DaysPastDue": 41,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-009-002",
+            "PayerId": "CUST009",
+            "InvoiceNumber": "INV-2025-1078",
+            "InvoiceAmount": 5000.00,
+            "DueDate": "2025-12-15",
+            "DaysPastDue": 36,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-010-001",
+            "PayerId": "CUST010",
+            "InvoiceNumber": "INV-2025-0912",
+            "InvoiceAmount": 8900.50,
+            "DueDate": "2025-11-15",
+            "DaysPastDue": 66,
+            "Currency": "USD"
+        },
+        {
+            "InvoiceId": "inv-010-002",
+            "PayerId": "CUST010",
+            "InvoiceNumber": "INV-2025-0956",
+            "InvoiceAmount": 10000.00,
+            "DueDate": "2025-11-20",
+            "DaysPastDue": 61,
+            "Currency": "USD"
+        }
+    ]
+}

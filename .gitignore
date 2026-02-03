@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# SAP CAP Generated artifacts (REGENERATABLE - DO NOT PUSH)
+gen/
+_out/
+
+# Build artifacts
+mta_archives/
+mta-*
+.*_mta_build_tmp
+
+# Sensitive Data
+.env
+default-env.json
+
+# OS Junk
+.DS_Store
+Thumbs.db
+# added by cds
+.cdsrc-private.json

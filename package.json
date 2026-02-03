@@ -1,0 +1,77 @@
+{
+  "name": "collectiq",
+  "version": "1.0.0",
+  "description": "AI-Powered Collections Assistant",
+  "repository": "<Add your repository here>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@cap-js/hana": "^2",
+    "@google/genai": "^1.34.0",
+    "@google/generative-ai": "^0.24.1",
+    "@sap-cloud-sdk/connectivity": "^4.3.1",
+    "@sap-cloud-sdk/http-client": "^4.3.1",
+    "@sap-cloud-sdk/resilience": "^4.3.1",
+    "@sap/approuter": "^20.8.7",
+    "@sap/audit-logging": "^6.9.0",
+    "@sap/cds": "^9.6.1",
+    "@sap/logging": "^9.0.0",
+    "@sap/xsenv": "^6.0.0",
+    "@sap/xssec": "^4.12.1",
+    "axios": "^1.13.2",
+    "body-parser": "^2.2.2",
+    "cron": "^3.5.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "express-ws": "^5.0.2",
+    "ngrok": "^5.0.0-beta.2",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.12",
+    "openai": "^6.16.0",
+    "twilio": "^5.11.2",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^2.1.2",
+    "@sap/cds-dk": "^9.6.0",
+    "@sap/ux-ui5-tooling": "1",
+    "mbt": "^1.2.34",
+    "rimraf": "^5.0.5"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "build": "rimraf resources mta_archives && mbt build",
+    "deploy": "cf deploy mta_archives/collectiq_1.0.0.mtar"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sql",
+        "[production]": {
+          "kind": "hana"
+        }
+      },
+      "auth": {
+        "[production]": {
+          "kind": "xsuaa"
+        }
+      },
+      "ZUI_COLLECTIQ_V4": {
+        "kind": "odata",
+        "model": "srv/external/ZUI_COLLECTIQ_V4",
+        "[development]": {
+          "credentials": {
+            "url": "https://fa13318e-1cb9-41eb-b81d-1759ca1e28d3.abap.us10.hana.ondemand.com/sap/opu/odata4/sap/zui_collectiq_v4/srvd/sap/zui_collectiq_v4/0001",
+            "authentication": "BasicAuthentication",
+            "username": "riya@vegahteam.com",
+            "password": "Riya@1611"
+          }
+        },
+        "[production]": {
+          "credentials": {
+            "destination": "ZUI_COLLECTIQ_04"
+          }
+        }
+      }
+    }
+  }
+}

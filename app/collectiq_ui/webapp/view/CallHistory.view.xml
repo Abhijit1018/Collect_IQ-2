@@ -1,0 +1,100 @@
+<mvc:View
+    controllerName="my.collectiq.controller.CallHistory"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    height="100%">
+
+    <Page
+        id="callHistoryPage"
+        title="All Call Analysis History"
+        showNavButton="true"
+        navButtonPress="onNavBack">
+        
+        <content>
+            <Table
+                id="callHistoryTable"
+                items="{
+                    path: '/CallTranscripts',
+                    parameters: {
+                        $expand: 'payer'
+                    },
+                    sorter: {
+                        path: 'callDate',
+                        descending: true
+                    }
+                }"
+                growing="true"
+                growingThreshold="20"
+                mode="SingleSelectMaster"
+                itemPress="onItemPress"
+                class="sapUiResponsiveMargin">
+                
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title text="Call Transcripts &amp; AI Analysis" level="H2"/>
+                        <ToolbarSpacer/>
+                        <SearchField width="300px" placeholder="Search by Payer Name..." search="onSearch"/>
+                        <Button icon="sap-icon://sort" press="onSort"/>
+                    </OverflowToolbar>
+                </headerToolbar>
+                
+                <columns>
+                    <Column width="15%">
+                        <Text text="Date"/>
+                    </Column>
+                    <Column width="20%">
+                        <Text text="Payer"/>
+                    </Column>
+                    <Column width="10%" minScreenWidth="Tablet" demandPopin="true">
+                        <Text text="Duration"/>
+                    </Column>
+                     <Column width="30%" minScreenWidth="Tablet" demandPopin="true">
+                        <Text text="Conclusion / Summary"/>
+                    </Column>
+                    <Column width="15%" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+                        <Text text="Sentiment"/>
+                    </Column>
+                    <Column width="10%" hAlign="Center" minScreenWidth="Desktop" demandPopin="true">
+                        <Text text="Promise?"/>
+                    </Column>
+                </columns>
+                
+                <items>
+                    <ColumnListItem type="Navigation" press="onItemPress">
+                        <cells>
+                            <Text text="{
+                                path: 'callDate',
+                                type: 'sap.ui.model.type.DateTime',
+                                formatOptions: { pattern: 'dd/MM/yyyy HH:mm' }
+                            }"/>
+                            <ObjectIdentifier title="{payer/PayerName}" text="{payer/PayerId}"/>
+                            <Text text="{
+                                path: 'duration',
+                                formatter: '.formatter.formatDuration'
+                            }"/>
+                            <Text text="{callConclusion}" maxLines="2" wrapping="true"/>
+                            <ObjectStatus
+                                text="{
+                                    path: 'sentimentScore',
+                                    formatter: '.formatter.formatSentimentLabel'
+                                }"
+                                state="{
+                                    path: 'sentimentScore',
+                                    formatter: '.formatter.formatSentimentState'
+                                }"
+                                icon="{
+                                    path: 'sentimentScore',
+                                    formatter: '.formatter.formatSentimentIcon'
+                                }"/>
+                            <ObjectStatus
+                                icon="{= ${paymentPromiseDate} ? 'sap-icon://accept' : ''}"
+                                state="Success"
+                                tooltip="{= ${paymentPromiseDate} ? 'Promise made' : 'No promise' }"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+</mvc:View>

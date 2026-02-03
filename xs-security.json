@@ -1,0 +1,16 @@
+{
+  "xsappname": "collectiq-ab-104",
+  "tenant-mode": "dedicated",
+  "description": "Security profile of called application",
+  "scopes": [],
+  "role-templates": [],
+  "attributes": [],
+  "oauth2-configuration": {
+    "redirectUris": [
+      "http://localhost:4004/**",
+      "https://*.trial.applicationstudio.cloud.sap/**",
+      "https://*.cfapps.us10-001.hana.ondemand.com/**",
+      "https://*.cf.us10-001.hana.ondemand.com/**"
+    ]
+  }
+}
