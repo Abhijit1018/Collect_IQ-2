@@ -9,6 +9,7 @@ const stage1Template = require('./templates/stage1');
 const stage2Template = require('./templates/stage2');
 const stage3Template = require('./templates/stage3');
 const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 require('dotenv').config();
 
 module.exports = cds.service.impl(async function () {
@@ -460,6 +461,7 @@ module.exports = cds.service.impl(async function () {
   // --- G. WEBHOOK HANDLERS (INSIDE SERVICE FUNCTION) ---
   const app = cds.app;
   const bodyParser = require('body-parser');
+  app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
   // Initialize express-ws for WebSocket support
@@ -694,6 +696,173 @@ module.exports = cds.service.impl(async function () {
     res.send('Test route works! Routes are registering correctly.');
   });
 
+  // SHADOW MODE (Gemini Simulation)
+  app.post('/collect-iq/chat-simulation', async (req, res) => {
+    console.log(`\n>>> [SHADOW-MODE] ========== CHAT SIMULATION ==========`);
+    try {
+      const { text, payerId } = req.body;
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      // Define Tools for Gemini
+      const tools = [
+        {
+          function_declarations: [
+            {
+              name: "schedule_followup",
+              description: "Schedules a follow-up call or reminder for the customer.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  date: {
+                    type: "STRING",
+                    description: "The date for the follow-up in YYYY-MM-DD format. If the user says 'Monday', calculate the date of the next Monday."
+                  },
+                  reason: {
+                    type: "STRING",
+                    description: "The reason for the follow-up (e.g., 'Payment promise', 'Call back requested')."
+                  }
+                },
+                required: ["date"]
+              }
+            }
+          ]
+        }
+      ];
+
+      // Using 'gemini-flash-latest' as it is explicitly available in the API list
+      const model = genAI.getGenerativeModel({
+        model: "gemini-flash-latest",
+        tools: tools,
+        toolConfig: { functionCallingConfig: { mode: "AUTO" } }
+      });
+
+      const db = await cds.connect.to('db');
+      const payer = await db.run(SELECT.one.from('my.collectiq.Payers').where({ PayerId: payerId }));
+      const payerName = payer?.PayerName || 'the customer';
+
+      let amountContext = '';
+      if (payer?.TotalPastDue) {
+        amountContext = `The specific overdue amount is ${payer.TotalPastDue} ${payer.Currency || ''}.`;
+      } else {
+        amountContext = `The exact amount is not available, so refer to it generally as "your outstanding balance".`;
+      }
+
+      // Calculate today's date for the AI's reference
+      const today = new Date().toISOString().split('T')[0];
+
+      const systemInstruction = `You are a professional collections agent for Vegah CollectIQ.
+              
+Your Goal: professionally remind the customer about their payment.
+Current Date: ${today}
+
+1. Start by greeting ${payerName} and clearly stating the purpose of the call (if this is the first message).
+2. ${amountContext}
+3. Keep responses concise (under 2 sentences) unless answering a question.
+4. Be empathetic but professional.
+5. IF the user asks for a human, say "I am transferring you to a specialist now."
+6. IF the customer agrees to pay later or asks for a callback, USE the 'schedule_followup' tool.
+7. Context: Status: ${payer?.LastOutreachStatus || 'unknown'}`;
+
+      const chat = model.startChat({
+        history: [
+          {
+            role: "user",
+            parts: [{ text: `System Instruction: ${systemInstruction}` }],
+          },
+          {
+            role: "model",
+            parts: [{ text: "Understood. I am ready to simulate the agent." }],
+          }
+        ],
+      });
+
+      const result = await chat.sendMessage(text);
+      const response = await result.response;
+
+      // Handle Function Calls
+      const functionCalls = response.functionCalls();
+      let responseText = response.text() || "";
+
+      if (functionCalls && functionCalls.length > 0) {
+        for (const call of functionCalls) {
+          if (call.name === 'schedule_followup') {
+            const { date, reason } = call.args;
+            console.log(`>>> [SHADOW-MODE] Tool Call: schedule_followup`, call.args);
+
+            // Execute DB Insert
+            try {
+              const followUpID = cds.utils.uuid();
+              await db.run(INSERT.into('my.collectiq.ScheduledFollowups').entries({
+                ID: followUpID,
+                payer_PayerId: payerId,
+                scheduledDate: date,
+                scheduledTime: '10:00:00', // Explicit default time
+                reason: reason || "Scheduled via Shadow Mode",
+                status: 'pending'
+              }));
+              console.log(`>>> [SHADOW-MODE] Follow-up scheduled in DB for ${date}`); // Log 1
+
+              // 2. Log to Outreach History (so it appears in Payer Details & Dashboard)
+              await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+                ID: cds.utils.uuid(),
+                payer_PayerId: payerId,
+                outreachType: 'call', // Simulated call
+                outreachDate: new Date().toISOString(),
+                status: 'responded',
+                responseReceived: true,
+                responseDate: new Date().toISOString(),
+                notes: `[Shadow Mode] Follow-up scheduled: ${reason}`,
+                bodyText: `Customer agreed to pay later. Follow-up scheduled for ${date}. Reason: ${reason}`, // Visible in "Message" column
+                stageAtGeneration: payer?.Stage || 'STAGE_1' // Added stage tracking
+              }));
+
+              // 3. Update Payer Status (so Dashboard updates)
+              await db.run(UPDATE('my.collectiq.Payers').set({
+                LastOutreachStatus: 'Follow-up Scheduled',
+                lastOutreachAt: new Date().toISOString()
+              }).where({ PayerId: payerId }));
+
+              // 4. Create Transcript Analysis (so it appears in "Transcript Analysis History" tab)
+              await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+                ID: cds.utils.uuid(),
+                payer_PayerId: payerId,
+                callId: `SIM-${Date.now()}`,
+                callDate: new Date().toISOString(),
+                duration: 120, // Mock duration (2 mins)
+                transcriptAgent: "Agent: (Shadow Mode Simulation)",
+                transcriptPayer: `Customer: (Shadow Mode logic applied - ${reason})`,
+                fullTranscript: `[Shadow Mode Simulation]\nOutcome: Follow-up scheduled for ${date}.\nReason: ${reason}`,
+                callConclusion: `Follow-up scheduled: ${reason}`, // Visible in "Conclusion" column
+                paymentPromiseDate: date,
+                paymentPromiseConfirmed: true,
+                sentimentScore: 0.85, // Mock positive sentiment
+                recommendedAction: "Verify payment on scheduled date"
+              }));
+
+              // Append system confirmation to response if empty
+              if (!responseText) {
+                responseText = `(System: Follow-up scheduled for ${date})`;
+              }
+            } catch (dbErr) {
+              console.error(">>> [SHADOW-MODE] DB Error:", dbErr.message);
+              responseText += " [Error scheduling follow-up in database]";
+            }
+          }
+        }
+      }
+
+      // If the model called a function but didn't generate text (common in some modes), ensure we send something back
+      if (!responseText && functionCalls.length > 0) {
+        responseText = "I have scheduled the follow-up as requested.";
+      }
+
+      res.json({ response: responseText });
+
+    } catch (err) {
+      console.error(">>> [SHADOW-MODE ERROR]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // ========== TWILIO MEDIA STREAM + OPENAI REALTIME API ==========
   // Real-time voice conversation powered by OpenAI
   app.ws('/collect-iq/media-stream', (ws, req) => {
@@ -817,7 +986,8 @@ Your Goal: professionally remind the customer about their payment.
 2. ${amountContext}
 3. Keep responses concise (under 2 sentences) unless answering a question.
 4. Be empathetic but professional.
-5. When the conversation is concluded (e.g., they agree to pay, or refuse and say goodbye), YOU MUST use the "end_call" tool to terminate the connection.
+5. IF the user asks for a human, say "I am transferring you to a specialist now."
+6. When the conversation is concluded (e.g., they agree to pay, or refuse and say goodbye), YOU MUST use the "end_call" tool to terminate the connection.
 
 Context:
 ${callDetails}`,
@@ -826,6 +996,15 @@ ${callDetails}`,
                 type: 'function',
                 name: 'end_call',
                 description: 'Ends the call immediately. Use this when the conversation is over.',
+                parameters: {
+                  type: 'object',
+                  properties: {},
+                  required: []
+                }
+              }, {
+                type: 'function',
+                name: 'transfer_agent',
+                description: 'Transfers the customer to a human agent. Use this when they explicitly ask for a human or are very frustrated.',
                 parameters: {
                   type: 'object',
                   properties: {},
@@ -890,10 +1069,34 @@ ${callDetails}`,
                 console.log(`>>> [OPENAI] Response completed`);
                 if (message.response && message.response.output) {
                   message.response.output.forEach(item => {
-                    if (item.type === 'function_call' && item.name === 'end_call') {
-                      console.log('>>> [OPENAI] Tool call detected: end_call. Terminating connection.');
-                      if (ws.readyState === WebSocket.OPEN) {
-                        ws.close();
+                    if (item.type === 'function_call') {
+                      if (item.name === 'end_call') {
+                        console.log('>>> [OPENAI] Tool call detected: end_call. Terminating connection.');
+                        if (ws.readyState === WebSocket.OPEN) {
+                          ws.close();
+                        }
+                      } else if (item.name === 'transfer_agent') {
+                        console.log(`>>> [OPENAI] Tool call detected: transfer_agent. Forwarding call to ${process.env.TRANSFER_PHONE_NUMBER}...`);
+
+                        // Use Twilio REST API to modify the live call
+                        if (callSid) {
+                          const transferTwiml = `<Response>
+                                                  <Say voice="alice">Please hold while I connect you to a specialist.</Say>
+                                                  <Dial>${process.env.TRANSFER_PHONE_NUMBER}</Dial>
+                                                </Response>`;
+
+                          twilioClient.calls(callSid)
+                            .update({ twiml: transferTwiml })
+                            .then(call => console.log(`>>> [TWILIO] Call forwarded to human agent. Status: ${call.status}`))
+                            .catch(err => console.error(`>>> [TWILIO] Error forwarding call: ${err.message}`));
+
+                          // Close WebSocket as Twilio will handle the rest via PSTN
+                          if (ws.readyState === WebSocket.OPEN) {
+                            ws.close();
+                          }
+                        } else {
+                          console.error(">>> [OPENAI] Impossible to transfer: callSid is missing.");
+                        }
                       }
                     }
                   });

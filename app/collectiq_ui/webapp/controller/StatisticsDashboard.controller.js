@@ -116,19 +116,42 @@ sap.ui.define([
             });
         },
 
+        onNavToFollowups: function () {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("followups");
+        },
+
+        onNavToCallHistory: function () {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("callHistory");
+        },
+
+        onNavToCustomers: function () {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("main");
+        },
+
+        onNavToShadowMode: function () {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("shadowMode");
+        },
+
         onCardPress: function (oEvent) {
             // Navigate to detailed view if needed
             MessageToast.show("Card pressed");
         },
 
         onNavBack: function () {
-            const oHistory = History.getInstance();
-            const sPreviousHash = oHistory.getPreviousHash();
+            var oHistory = History.getInstance();
+            var sPreviousHash = oHistory.getPreviousHash();
 
             if (sPreviousHash !== undefined) {
                 window.history.go(-1);
             } else {
-                this.getOwnerComponent().getRouter().navTo("main", {}, true);
+                var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                // Nav back to home (which is now dashboard, but if we are ON dashboard, this is moot)
+                // Leaving for safety
+                oRouter.navTo("dashboard", {}, true);
             }
         }
     });

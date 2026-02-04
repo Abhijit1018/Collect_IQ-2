@@ -81,8 +81,13 @@
             },
             "routes": [
                 {
-                    "name": "main",
+                    "name": "dashboard",
                     "pattern": "",
+                    "target": "dashboard"
+                },
+                {
+                    "name": "main",
+                    "pattern": "customers",
                     "target": "main"
                 },
                 {
@@ -91,9 +96,9 @@
                     "target": "detail"
                 },
                 {
-                    "name": "dashboard",
-                    "pattern": "dashboard",
-                    "target": "dashboard"
+                    "name": "shadowMode",
+                    "pattern": "shadow-mode",
+                    "target": "shadowMode"
                 },
                 {
                     "name": "callResults",
@@ -134,6 +139,10 @@
                 },
                 "callHistory": {
                     "viewName": "CallHistory",
+                    "viewLevel": 1
+                },
+                "shadowMode": {
+                    "viewName": "ShadowMode",
                     "viewLevel": 1
                 }
             }

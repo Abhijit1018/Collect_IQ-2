@@ -54,6 +54,7 @@ entity OutreachHistory : managed {
     responseDate           : DateTime;
     notes                  : String(1000);
     bodyText               : LargeString; // Keep legacy field
+    stageAtGeneration      : String(15); // Added to track stage history
 }
 
 entity CallTranscripts : managed {

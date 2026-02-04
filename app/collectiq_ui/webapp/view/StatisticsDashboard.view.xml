@@ -9,7 +9,59 @@
     xmlns:viz.data="sap.viz.ui5.data"
     height="100%">
     
-    <Page id="statisticsPage" title="Statistics Dashboard" showNavButton="true" navButtonPress="onNavBack">
+    <Page 
+        showHeader="true" 
+        enableScrolling="true"
+        class="sapUiNoContentPadding mainPageBg"
+        tooltip="CollectiQ Statistics Dashboard">
+        
+        <!-- Custom Header (Global Navigation) -->
+        <customHeader>
+            <Bar class="collectiqHeader">
+                <contentLeft>
+                    <HBox alignItems="Center" height="100%" class="sapUiLargeMarginEnd">
+                        <core:Icon 
+                            src="sap-icon://customer-financial-fact-sheet" 
+                            size="1.5rem"
+                            color="#fff"
+                            class="sapUiSmallMarginEnd"/>
+                        <Title text="CollectIQ Dashboard" level="H3" class="headerTitle"/>
+                    </HBox>
+                </contentLeft>
+                <contentMiddle>
+                    <!-- Space for search or title -->
+                </contentMiddle>
+                <contentRight>
+                    <Button 
+                        text="Customers" 
+                        icon="sap-icon://customer"
+                        press="onNavToCustomers"
+                        tooltip="View Customer List"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
+                    <Button 
+                        text="Follow-ups" 
+                        icon="sap-icon://calendar"
+                        press="onNavToFollowups"
+                        tooltip="View Scheduled Follow-ups"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
+                    <Button 
+                        text="Call History" 
+                        icon="sap-icon://history"
+                        press="onNavToCallHistory"
+                        tooltip="View Call History"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
+                    <Button 
+                        text="Shadow Mode" 
+                        icon="sap-icon://lab"
+                        press="onNavToShadowMode"
+                        type="Emphasized"
+                        tooltip="Test AI Simulation"
+                        class="headerNavButton sapUiSmallMarginEnd"/>
+                    <Avatar initials="JW" displaySize="S" tooltip="Current User"/>
+                </contentRight>
+            </Bar>
+        </customHeader>
+
         <content>
             <ScrollContainer height="100%" vertical="true">
                 

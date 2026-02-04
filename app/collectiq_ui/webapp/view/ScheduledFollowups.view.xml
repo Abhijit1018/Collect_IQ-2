@@ -63,6 +63,7 @@
                                 path: 'scheduledDate',
                                 type: 'sap.ui.model.type.Date',
                                 formatOptions: {
+                                    source: { pattern: 'yyyy-MM-dd' },
                                     pattern: 'dd/MM/yyyy'
                                 }
                             }"/>
@@ -70,6 +71,7 @@
                                 path: 'scheduledTime',
                                 type: 'sap.ui.model.type.Time',
                                 formatOptions: {
+                                    source: { pattern: 'HH:mm:ss' },
                                     pattern: 'HH:mm'
                                 }
                             }"/>

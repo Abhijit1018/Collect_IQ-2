@@ -1,0 +1,106 @@
+<mvc:View
+    controllerName="my.collectiq.controller.ShadowMode"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:layout="sap.ui.layout"
+    height="100%">
+    
+    <Page title="Shadow Mode (AI Simulation)" showNavButton="true" navButtonPress="onNavBack">
+        <content>
+            <layout:Splitter height="100%" width="100%">
+                
+                <!-- Left Pane: Payer Selection -->
+                <List
+                    id="payerList"
+                    headerText="Select a Customer"
+                    items="{/Payers}"
+                    mode="SingleSelectMaster"
+                    itemPress="onPayerSelect"
+                    includeItemInSelection="true">
+                    <layoutData>
+                        <layout:SplitterLayoutData size="30%"/>
+                    </layoutData>
+                    <StandardListItem
+                        title="{PayerName}"
+                        description="ID: {PayerId}"
+                        info="{TotalPastDue} {Currency}"
+                        infoState="{= ${TotalPastDue} > 0 ? 'Error' : 'Success'}"
+                        type="Active"/>
+                </List>
+                
+                <!-- Right Pane: Chat Interface -->
+                <layout:VerticalLayout width="100%">
+                    <layout:layoutData>
+                        <layout:SplitterLayoutData size="70%"/>
+                    </layout:layoutData>
+                    
+                    <VBox height="100%" justifyContent="SpaceBetween" class="sapUiSmallMargin">
+                        
+                        <!-- Chat History -->
+                        <ScrollContainer
+                            id="chatContainer"
+                            height="85%"
+                            vertical="true"
+                            focusable="true"
+                            class="sapUiSmallMarginBottom chatContainer">
+                            <List
+                                id="chatList"
+                                items="{chat>/messages}"
+                                showSeparators="None"
+                                noDataText="Select a customer and start typing to simulate the AI agent.">
+                                <CustomListItem>
+                                    <HBox
+                                        justifyContent="{= ${chat>sender} === 'User' ? 'End' : 'Start'}"
+                                        alignItems="Center"
+                                        width="100%"
+                                        class="sapUiTinyMarginBottom">
+                                        
+                                        <!-- AI Avatar (Left) -->
+                                        <Avatar
+                                            src="sap-icon://robot"
+                                            displaySize="XS"
+                                            backgroundColor="Accent2"
+                                            class="sapUiTinyMarginEnd"
+                                            visible="{= ${chat>sender} === 'AI'}"/>
+                                            
+                                        <!-- Message Bubble -->
+                                        <VBox 
+                                            class="{= ${chat>sender} === 'User' ? 'userMessageBubble' : 'aiMessageBubble'} sapUiTinyMarginBeginEnd">
+                                            <Text text="{chat>text}" wrapping="true" class="messageText"/>
+                                        </VBox>
+                                        
+                                        <!-- User Avatar (Right) -->
+                                        <Avatar
+                                            src="sap-icon://person-placeholder"
+                                            displaySize="XS"
+                                            backgroundColor="Accent5"
+                                            class="sapUiTinyMarginBegin"
+                                            visible="{= ${chat>sender} === 'User'}"/>
+                                    </HBox>
+                                </CustomListItem>
+                            </List>
+                        </ScrollContainer>
+                        
+                        <!-- Input Area -->
+                        <HBox alignItems="Center">
+                            <Input
+                                id="chatInput"
+                                placeholder="Type a message (e.g., 'I want a human')..."
+                                width="100%"
+                                submit="onSendMessage"/>
+                            <Button
+                                text="Send"
+                                type="Emphasized"
+                                icon="sap-icon://paper-plane"
+                                press="onSendMessage"
+                                class="sapUiTinyMarginBegin"/>
+                        </HBox>
+                        
+                    </VBox>
+                </layout:VerticalLayout>
+                
+            </layout:Splitter>
+        </content>
+    </Page>
+</mvc:View>
