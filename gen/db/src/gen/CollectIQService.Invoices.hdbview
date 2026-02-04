@@ -1,0 +1,13 @@
+VIEW CollectIQService_Invoices AS SELECT
+  Invoices_0.createdAt,
+  Invoices_0.createdBy,
+  Invoices_0.modifiedAt,
+  Invoices_0.modifiedBy,
+  Invoices_0.InvoiceId,
+  Invoices_0.PayerId,
+  Invoices_0.InvoiceNumber,
+  Invoices_0.InvoiceAmount,
+  Invoices_0.DueDate,
+  Invoices_0.DaysPastDue,
+  Invoices_0.Currency
+FROM my_collectiq_Invoices AS Invoices_0

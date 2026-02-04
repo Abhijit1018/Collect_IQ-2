@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "imports": [
+    {
+      "target_table": "MY_COLLECTIQ_PAYERS",
+      "source_data": {
+        "data_type": "CSV",
+        "file_name": "my.collectiq-Payers.csv",
+        "has_header": true,
+        "type_config": {
+          "delimiter": ","
+        }
+      },
+      "import_settings": {
+        "import_columns": [
+          "PAYERID",
+          "PAYERNAME",
+          "TOTALPASTDUE",
+          "MAXDAYSPASTDUE",
+          "STAGE",
+          "CRITICALITY",
+          "LASTOUTREACHSTATUS",
+          "CONTACTEMAIL",
+          "CONTACTPHONE",
+          "CURRENCY"
+        ],
+        "include_filter": []
+      },
+      "column_mappings": {
+        "PAYERID": "PayerId",
+        "PAYERNAME": "PayerName",
+        "TOTALPASTDUE": "TotalPastDue",
+        "MAXDAYSPASTDUE": "MaxDaysPastDue",
+        "STAGE": "Stage",
+        "CRITICALITY": "criticality",
+        "LASTOUTREACHSTATUS": "LastOutreachStatus",
+        "CONTACTEMAIL": "ContactEmail",
+        "CONTACTPHONE": "ContactPhone",
+        "CURRENCY": "Currency"
+      }
+    }
+  ]
+}

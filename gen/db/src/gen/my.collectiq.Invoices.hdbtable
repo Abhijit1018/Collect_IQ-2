@@ -1,0 +1,14 @@
+COLUMN TABLE my_collectiq_Invoices (
+  createdAt TIMESTAMP,
+  createdBy NVARCHAR(255),
+  modifiedAt TIMESTAMP,
+  modifiedBy NVARCHAR(255),
+  InvoiceId NVARCHAR(36) NOT NULL,
+  PayerId NVARCHAR(20),
+  InvoiceNumber NVARCHAR(20),
+  InvoiceAmount DECIMAL(15, 2),
+  DueDate DATE,
+  DaysPastDue INTEGER,
+  Currency NVARCHAR(5),
+  PRIMARY KEY(InvoiceId)
+)
