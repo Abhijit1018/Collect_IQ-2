@@ -52,8 +52,56 @@ sap.ui.define([
         },
 
         onScheduleNew: function () {
-            // TODO: Open dialog to create new follow-up
-            MessageToast.show("Functionality coming soon: Schedule new follow-up dialog");
+            if (!this._oNewFollowupDialog) {
+                this._oNewFollowupDialog = sap.ui.xmlfragment("my.collectiq.view.fragments.NewFollowupDialog", this);
+                this.getView().addDependent(this._oNewFollowupDialog);
+            }
+            this._oNewFollowupDialog.open();
+        },
+
+        onCancelFollowup: function () {
+            if (this._oNewFollowupDialog) {
+                this._oNewFollowupDialog.close();
+            }
+        },
+
+        onSaveFollowup: function () {
+            const oPayerSelect = sap.ui.getCore().byId("payerSelect");
+            const oDatePicker = sap.ui.getCore().byId("scheduledDate");
+            const oReasonInput = sap.ui.getCore().byId("reason");
+
+            const sPayerId = oPayerSelect.getSelectedKey();
+            const sDate = oDatePicker.getValue(); // YYYY-MM-DD from valueFormat
+            const sReason = oReasonInput.getValue();
+
+            if (!sPayerId || !sDate || !sReason) {
+                MessageToast.show("Please fill all required fields.");
+                return;
+            }
+
+            const oModel = this.getView().getModel();
+            const oEntry = oModel.createEntry("/ScheduledFollowups", {
+                properties: {
+                    payer_PayerId: sPayerId,
+                    scheduledDate: sDate,
+                    scheduledTime: new Date().toTimeString().split(' ')[0], // Current Local Time
+                    reason: sReason,
+                    status: 'pending'
+                },
+                success: () => {
+                    MessageToast.show("Follow-up scheduled successfully.");
+                    this.onCancelFollowup();
+                    // Clear inputs
+                    oPayerSelect.setSelectedKey(null);
+                    oDatePicker.setValue(null);
+                    oReasonInput.setValue("");
+                },
+                error: (oError) => {
+                    MessageBox.error("Failed to schedule follow-up: " + oError.message);
+                }
+            });
+
+            oModel.submitChanges();
         },
 
         onCancel: function (oEvent) {

@@ -308,11 +308,11 @@ module.exports = cds.service.impl(async function () {
       }
     },
     null,
-    false, // DISABLED: Set to true to enable auto-start
+    true, // ENABLED: Auto-start
     'Asia/Kolkata'
   );
 
-  console.log('[SCHEDULER] Cron job DISABLED - set start parameter to true to enable');
+  console.log('[SCHEDULER] Cron job ENABLED - running every 2 minutes');
   console.log('[SCHEDULER] Sends: STAGE_1 & STAGE_2 = Email, STAGE_3 = Twilio Call');
   console.log('[SCHEDULER] Env check - TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'SET' : 'MISSING');
   console.log('[SCHEDULER] Env check - NGROK_URL:', process.env.NGROK_URL ? 'SET' : 'MISSING');
@@ -760,7 +760,8 @@ Current Date: ${today}
 4. Be empathetic but professional.
 5. IF the user asks for a human, say "I am transferring you to a specialist now."
 6. IF the customer agrees to pay later or asks for a callback, USE the 'schedule_followup' tool.
-7. Context: Status: ${payer?.LastOutreachStatus || 'unknown'}`;
+7. NEGOTIATION RULE: Do NOT accept payment promises or follow-ups more than 30 days in the future. If they ask for "next year" or "6 months", firmly refuse and ask for a date within this month.
+8. Context: Status: ${payer?.LastOutreachStatus || 'unknown'}`;
 
       const chat = model.startChat({
         history: [
@@ -795,7 +796,7 @@ Current Date: ${today}
                 ID: followUpID,
                 payer_PayerId: payerId,
                 scheduledDate: date,
-                scheduledTime: '10:00:00', // Explicit default time
+                scheduledTime: new Date().toTimeString().split(' ')[0], // Local system time
                 reason: reason || "Scheduled via Shadow Mode",
                 status: 'pending'
               }));
@@ -878,9 +879,9 @@ Current Date: ${today}
       const match = req.url.match(/[?&]payerId=([^&]+)/);
       if (match) {
         payerId = match[1];
-        console.log(`>>> [MEDIA-STREAM] Fallback parsed payerId from URL: ${payerId}`);
       }
     }
+    console.log(`>>> [MEDIA-STREAM] Final PayerID: ${payerId}`); // Explicit Log
 
     let openaiWs = null;
     let openaiConnecting = null;
@@ -987,7 +988,9 @@ Your Goal: professionally remind the customer about their payment.
 3. Keep responses concise (under 2 sentences) unless answering a question.
 4. Be empathetic but professional.
 5. IF the user asks for a human, say "I am transferring you to a specialist now."
-6. When the conversation is concluded (e.g., they agree to pay, or refuse and say goodbye), YOU MUST use the "end_call" tool to terminate the connection.
+6. IF the customer agrees to pay later or asks for a callback, USE the "schedule_followup" tool.
+7. NEGOTIATION RULE: Do NOT accept payment promises or follow-ups more than 30 days in the future. If they ask for "next year" or "6 months", firmly refuse and ask for a date within this month.
+8. When the conversation is concluded (e.g., they agree to pay, or refuse and say goodbye), YOU MUST use the "end_call" tool to terminate the connection.
 
 Context:
 ${callDetails}`,
@@ -1010,12 +1013,36 @@ ${callDetails}`,
                   properties: {},
                   required: []
                 }
+              }, {
+                type: 'function',
+                name: 'schedule_followup',
+                description: 'Schedules a follow-up call or reminder for the customer. Use this when they agree to pay later or ask for a callback.',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    date: {
+                      type: 'string',
+                      description: 'The date for the follow-up in YYYY-MM-DD format. If the user says "Monday", calculate the date of the next Monday.'
+                    },
+                    reason: {
+                      type: 'string',
+                      description: 'The reason for the follow-up (e.g., "Payment promise", "Call back requested").'
+                    }
+                  },
+                  required: ['date']
+                }
               }],
               tool_choice: 'auto',
               temperature: 0.7,
               max_response_output_tokens: 1024,
               input_audio_format: 'g711_ulaw',
-              output_audio_format: 'g711_ulaw'
+              output_audio_format: 'g711_ulaw',
+              turn_detection: {
+                type: 'server_vad',
+                threshold: 0.6, // Higher threshold avoids cutting off user
+                prefix_padding_ms: 300,
+                silence_duration_ms: 800 // Wait longer before responding
+              }
             }
           };
           safeSendToOpenAI(sessionConfig);
@@ -1028,10 +1055,64 @@ ${callDetails}`,
           reject(error);
         });
 
-        openaiWs.on('close', () => {
+        openaiWs.on('close', async () => {
           console.log(`>>> [OPENAI] Connection closed`);
           openaiConnecting = null;
           openaiWs = null;
+
+          // DEFAULT LOGGING: If the call ended without a specific tool action (like schedule_followup),
+          // we still need to log it so the UI updates (History, Status, Details).
+          if (payerId && callSid) {
+            try {
+              const db = await cds.connect.to('db');
+
+              // Check if a transcript already exists for this call (to avoid duplicates if tool was used)
+              const existing = await db.run(SELECT.one.from('my.collectiq.CallTranscripts').where({ callId: callSid }));
+
+              if (!existing) {
+                console.log(`>>> [VOICE-AGENT] Call ended without specific action. Logging default transcript...`);
+
+                // 1. Log to Outreach History
+                await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+                  ID: cds.utils.uuid(),
+                  payer_PayerId: payerId,
+                  outreachType: 'call',
+                  outreachDate: new Date().toISOString(),
+                  status: 'delivered', // Call connected but no resolution
+                  responseReceived: true,
+                  responseDate: new Date().toISOString(),
+                  notes: `[Voice Agent] Call completed. No specific action taken.`,
+                  bodyText: `Call completed. No specific outcome recorded.`, // Message column
+                  stageAtGeneration: payer?.Stage || 'STAGE_1'
+                }));
+
+                // 2. Update Payer Status
+                await db.run(UPDATE('my.collectiq.Payers').set({
+                  LastOutreachStatus: 'Call Completed',
+                  lastOutreachAt: new Date().toISOString()
+                }).where({ PayerId: payerId }));
+
+                // 3. Create General Transcript Analysis
+                await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+                  ID: cds.utils.uuid(),
+                  payer_PayerId: payerId,
+                  callId: callSid,
+                  callDate: new Date().toISOString(),
+                  duration: 60, // Default duration if not tracked
+                  transcriptAgent: "Agent: (Voice Call)",
+                  transcriptPayer: "Customer: (Voice Call)",
+                  fullTranscript: "[Voice Agent Call] Call ended without specific action.",
+                  callConclusion: "General Inquiry / No Resolution",
+                  paymentPromiseDate: null,
+                  paymentPromiseConfirmed: false,
+                  sentimentScore: 0.5, // Neutral
+                  recommendedAction: "Review call recording"
+                }));
+              }
+            } catch (err) {
+              console.error(">>> [VOICE-AGENT] Error logging default transcript:", err.message);
+            }
+          }
         });
 
         // Handle messages from OpenAI
@@ -1097,6 +1178,69 @@ ${callDetails}`,
                         } else {
                           console.error(">>> [OPENAI] Impossible to transfer: callSid is missing.");
                         }
+                      } else if (item.name === 'schedule_followup') {
+                        const args = JSON.parse(item.arguments);
+                        const { date, reason } = args;
+                        console.log(`>>> [OPENAI] Tool call detected: schedule_followup`, args);
+
+                        // Execute DB Insert (MATCHING SHADOW MODE LOGIC)
+                        (async () => {
+                          try {
+                            const db = await cds.connect.to('db');
+
+                            // 1. Insert Scheduled Follow-up
+                            const followUpID = cds.utils.uuid();
+                            await db.run(INSERT.into('my.collectiq.ScheduledFollowups').entries({
+                              ID: followUpID,
+                              payer_PayerId: payerId,
+                              scheduledDate: date,
+                              scheduledTime: new Date().toTimeString().split(' ')[0], // Local system time (e.g., 15:30:00)
+                              reason: reason || "Scheduled via Voice Agent",
+                              status: 'pending'
+                            }));
+                            console.log(`>>> [VOICE-AGENT] Follow-up scheduled in DB for ${date}`);
+
+                            // 2. Log to Outreach History
+                            await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+                              ID: cds.utils.uuid(),
+                              payer_PayerId: payerId,
+                              outreachType: 'call',
+                              outreachDate: new Date().toISOString(),
+                              status: 'responded',
+                              responseReceived: true,
+                              responseDate: new Date().toISOString(),
+                              notes: `[Voice Agent] Follow-up scheduled: ${reason}`,
+                              bodyText: `Customer agreed to pay later. Follow-up scheduled for ${date}. Reason: ${reason}`,
+                              stageAtGeneration: payer?.Stage || 'STAGE_1'
+                            }));
+
+                            // 3. Update Payer Status
+                            await db.run(UPDATE('my.collectiq.Payers').set({
+                              LastOutreachStatus: 'Follow-up Scheduled',
+                              lastOutreachAt: new Date().toISOString()
+                            }).where({ PayerId: payerId }));
+
+                            // 4. Create Transcript Analysis
+                            await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+                              ID: cds.utils.uuid(),
+                              payer_PayerId: payerId,
+                              callId: callSid || `VOICE-${Date.now()}`,
+                              callDate: new Date().toISOString(),
+                              duration: 120, // Mock duration or calc real duration if tracked
+                              transcriptAgent: "Agent: (Voice Call)",
+                              transcriptPayer: `Customer: (Voice Call - ${reason})`,
+                              fullTranscript: `[Voice Agent Call]\nOutcome: Follow-up scheduled for ${date}.\nReason: ${reason}`,
+                              callConclusion: `Follow-up scheduled: ${reason}`,
+                              paymentPromiseDate: date,
+                              paymentPromiseConfirmed: true,
+                              sentimentScore: 0.85,
+                              recommendedAction: "Verify payment on scheduled date"
+                            }));
+
+                          } catch (dbErr) {
+                            console.error(">>> [VOICE-AGENT] DB Error:", dbErr.message);
+                          }
+                        })();
                       }
                     }
                   });
@@ -1198,7 +1342,7 @@ ${callDetails}`,
             console.log(`>>> [TWILIO] Media Format:`, data.mediaFormat);
             // Capture streamSid/callSid from start event too (some regions skip "connected")
             streamSid = streamSid || data.streamSid;
-            callSid = callSid || data.callSid;
+            callSid = callSid || (data.start && data.start.callSid) || data.callSid;
 
             await loadPayer();
             payerName = payer?.PayerName || 'the customer';
