@@ -13,12 +13,16 @@ build-parameters:
         - npx cds build --production
 
 modules:
+  # ==================== SERVER MODULE ====================
   - name: collectiq-srv
     type: nodejs
     path: gen/srv
     parameters:
       buildpack: nodejs_buildpack
-      command: npm run start
+      memory: 512M
+      disk-quota: 1024M
+    build-parameters:
+      builder: npm
     provides:
       - name: srv-api
         properties:
@@ -28,6 +32,7 @@ modules:
       - name: collectiq-db
       - name: collectiq-destination
 
+  # ==================== DATABASE DEPLOYER ====================
   - name: collectiq-db-deployer
     type: hdb
     path: gen/db
@@ -36,6 +41,7 @@ modules:
     requires:
       - name: collectiq-db
 
+  # ==================== APP ROUTER ====================
   - name: collectiq
     type: approuter.nodejs
     path: app/router
@@ -43,6 +49,12 @@ modules:
       keep-existing-routes: true
       disk-quota: 256M
       memory: 256M
+    build-parameters:
+      requires:
+        - name: collectiq-app
+          artifacts:
+            - ./*
+          target-path: resources
     requires:
       - name: srv-api
         group: destinations
@@ -53,12 +65,8 @@ modules:
       - name: collectiq-auth
       - name: collectiq-html5-runtime
       - name: collectiq-destination
-    provides:
-      - name: app-api
-        properties:
-          app-protocol: ${protocol}
-          app-uri: ${default-uri}
 
+  # ==================== UI5 APP CONTENT ====================
   - name: collectiq-app-deployer
     type: com.sap.application.content
     path: .
@@ -82,9 +90,10 @@ modules:
       builder: custom
       commands:
         - npm ci
-        - npm run build
+        - npm run build:cf
       supported-platforms: []
 
+  # ==================== DESTINATIONS CONTENT ====================
   - name: collectiq-destinations
     type: com.sap.application.content
     requires:
@@ -117,7 +126,9 @@ modules:
               ServiceKeyName: collectiq-auth-key
               sap.cloud.service: collectiq.service
 
+# ==================== RESOURCES ====================
 resources:
+  # XSUAA Authentication
   - name: collectiq-auth
     type: org.cloudfoundry.managed-service
     parameters:
@@ -125,20 +136,17 @@ resources:
       service-plan: application
       path: ./xs-security.json
       config:
-        xsappname: collectiq-ab-104 # Corrected to match your xs-security.json
+        xsappname: collectiq-${org}-${space}
         tenant-mode: dedicated
-        oauth2-configuration:
-          redirect-uris:
-            - https://*~{app-api/app-uri}/**
-    requires:
-      - name: app-api
 
+  # HANA HDI Container
   - name: collectiq-db
     type: com.sap.xs.hdi-container
     parameters:
       service: hana
       service-plan: hdi-shared
 
+  # Destination Service
   - name: collectiq-destination
     type: org.cloudfoundry.managed-service
     parameters:
@@ -146,6 +154,7 @@ resources:
       service-plan: lite
       config:
         HTML5Runtime_enabled: true
+        version: 1.0.0
         init_data:
           instance:
             existing_destinations_policy: update
@@ -157,26 +166,24 @@ resources:
                 ProxyType: Internet
                 HTML5.ForwardAuthToken: true
                 HTML5.DynamicDestination: true
-              # LOGIC: Matches image_c90f8c.png and Colleague advice
               - Name: ZUI_COLLECTIQ_04
                 URL: https://fa13318e-1cb9-41eb-b81d-1759ca1e28d3.abap.us10.hana.ondemand.com
                 Type: HTTP
                 ProxyType: Internet
-                Authentication: OAuth2ClientCredentials
+                Authentication: BasicAuthentication
+                User: riya@vegahteam.com
+                Password: Riya@1611
     requires:
       - name: srv-api
-        group: destinations
-        properties:
-          name: srv-api
-          url: ~{srv-url}
-          forwardAuthToken: true
 
+  # HTML5 App Repository
   - name: collectiq-html5-repo-host
     type: org.cloudfoundry.managed-service
     parameters:
       service: html5-apps-repo
       service-plan: app-host
 
+  # HTML5 Runtime
   - name: collectiq-html5-runtime
     type: org.cloudfoundry.managed-service
     parameters:

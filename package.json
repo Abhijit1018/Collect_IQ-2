@@ -40,10 +40,39 @@
   },
   "scripts": {
     "start": "cds-serve",
-    "build": "rimraf resources mta_archives && mbt build",
-    "deploy": "cf deploy mta_archives/collectiq_1.0.0.mtar"
+    "watch": "cds watch --profile development",
+    "build": "rimraf resources mta_archives gen && cds build --production",
+    "build:mta": "rimraf resources mta_archives && mbt build --mtar collectiq.mtar",
+    "deploy": "cf deploy mta_archives/collectiq.mtar",
+    "deploy:hana": "cds deploy --to hana",
+    "undeploy": "cf undeploy collectiq --delete-services --delete-service-keys"
   },
   "cds": {
+    "build": {
+      "target": "gen",
+      "tasks": [
+        {
+          "for": "hana",
+          "src": "db",
+          "options": {
+            "model": ["db", "srv", "app"]
+          }
+        },
+        {
+          "for": "node-cf",
+          "src": "srv",
+          "options": {
+            "model": ["db", "srv", "app"]
+          }
+        }
+      ]
+    },
+    "odata": {
+      "version": "v4"
+    },
+    "hana": {
+      "deploy-format": "hdbtable"
+    },
     "requires": {
       "db": {
         "kind": "sql",
@@ -52,12 +81,13 @@
         }
       },
       "auth": {
+        "kind": "mocked",
         "[production]": {
           "kind": "xsuaa"
         }
       },
       "ZUI_COLLECTIQ_V4": {
-        "kind": "odata",
+        "kind": "odata-v4",
         "model": "srv/external/ZUI_COLLECTIQ_V4",
         "[development]": {
           "credentials": {
@@ -74,5 +104,8 @@
         }
       }
     }
-  }
+  },
+  "sapux": [
+    "app/collectiq_ui"
+  ]
 }

@@ -32,6 +32,34 @@ sap.ui.define([
             }
         },
 
+        formatDate: function (sDate) {
+            if (!sDate) return "";
+            try {
+                const oDate = new Date(sDate);
+                if (isNaN(oDate.getTime())) return sDate;
+                return oDate.toLocaleDateString('en-GB', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                });
+            } catch (e) {
+                return sDate;
+            }
+        },
+
+        formatTime: function (sTime) {
+            if (!sTime) return "";
+            try {
+                // Handle Time format from OData (e.g., "10:00:00" or "PT10H")
+                if (typeof sTime === 'string' && sTime.includes(':')) {
+                    return sTime.substring(0, 5); // Return HH:mm
+                }
+                return sTime;
+            } catch (e) {
+                return sTime;
+            }
+        },
+
         formatStatusState: function (status) {
             const statusMap = {
                 "pending": "Warning",

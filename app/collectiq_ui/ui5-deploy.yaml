@@ -1,0 +1,24 @@
+specVersion: '3.0'
+metadata:
+  name: collectiq-ui
+type: application
+resources:
+  configuration:
+    paths:
+      webapp: webapp
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"
+  customTasks:
+    - name: webide-extension-task-updateManifestJson
+      configuration:
+        appFolder: webapp
+        destDir: dist
+    - name: ui5-task-zipper
+      afterTask: generateCachebusterInfo
+      configuration:
+        archiveName: collectiqui
+        additionalFiles:
+          - xs-app.json

@@ -32,7 +32,7 @@ sap.ui.define([
             this.getView().bindElement({
                 path: sPath,
                 parameters: {
-                    $expand: "Invoices,outreachHistory"
+                    $expand: "Invoices,outreachHistory($select=ID,outreachType,outreachDate,stageAtGeneration,status,bodyText,notes),callTranscripts($orderby=callDate desc;$select=ID,callId,callDate,duration,callConclusion,sentimentScore,paymentPromiseDate)"
                 }
             });
         },

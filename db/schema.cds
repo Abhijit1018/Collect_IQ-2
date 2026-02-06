@@ -44,6 +44,7 @@ entity OutreachHistory : managed {
         sms;
     };
     outreachDate           : DateTime;
+    stageAtGeneration      : String(15); // Stage when outreach was generated
     status                 : String(20) enum {
         sent;
         delivered;

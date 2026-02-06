@@ -17,13 +17,111 @@ sap.ui.define([
                 busy: false
             });
             this.getView().setModel(oViewModel, "view");
+            
+            // Customer stats model
+            var oCustomerStatsModel = new JSONModel({
+                totalCustomers: 0,
+                totalOutstanding: "$0",
+                stage3Count: 0,
+                pendingOutreach: 0
+            });
+            this.getView().setModel(oCustomerStatsModel, "customerStats");
+            
+            // Attach to route matched to load stats when view is ready
+            var oRouter = this.getOwnerComponent().getRouter();
+            oRouter.getRoute("main").attachPatternMatched(this._onRouteMatched, this);
+        },
+        
+        _onRouteMatched: function() {
+            // Load customer stats when route is matched
+            this._loadCustomerStats();
+            
+            // Set up selection change handler
+            var oTable = this.byId("customerTable");
+            if (oTable) {
+                oTable.attachSelectionChange(this._onSelectionChange.bind(this));
+            }
+        },
+        
+        _loadCustomerStats: function() {
+            var that = this;
+            var oModel = this.getView().getModel();
+            
+            // Check if model is available
+            if (!oModel) {
+                console.log("Model not yet available, retrying in 500ms");
+                setTimeout(function() {
+                    that._loadCustomerStats();
+                }, 500);
+                return;
+            }
+            
+            // Fetch all payers for stats
+            var oBinding = oModel.bindList("/Payers");
+            oBinding.requestContexts(0, 1000).then(function(aContexts) {
+                var iTotalCustomers = aContexts.length;
+                var fTotalOutstanding = 0;
+                var iStage3Count = 0;
+                var iPendingOutreach = 0;
+                
+                aContexts.forEach(function(oContext) {
+                    var oData = oContext.getObject();
+                    fTotalOutstanding += oData.TotalPastDue || 0;
+                    if (oData.Stage === "STAGE_3") {
+                        iStage3Count++;
+                    }
+                    if (oData.LastOutreachStatus === "PENDING" || !oData.LastOutreachStatus) {
+                        iPendingOutreach++;
+                    }
+                });
+                
+                var oStatsModel = that.getView().getModel("customerStats");
+                oStatsModel.setData({
+                    totalCustomers: iTotalCustomers,
+                    totalOutstanding: that.formatter.formatCurrency(fTotalOutstanding),
+                    stage3Count: iStage3Count,
+                    pendingOutreach: iPendingOutreach
+                });
+            });
+        },
+        
+        _onSelectionChange: function(oEvent) {
+            var oTable = this.byId("customerTable");
+            var aSelectedItems = oTable.getSelectedItems();
+            var iCount = aSelectedItems.length;
+            var fTotalSelected = 0;
+            
+            aSelectedItems.forEach(function(oItem) {
+                var oContext = oItem.getBindingContext();
+                if (oContext) {
+                    fTotalSelected += oContext.getProperty("TotalPastDue") || 0;
+                }
+            });
+            
+            this.byId("selectedCountText").setText(iCount + " customer" + (iCount !== 1 ? "s" : ""));
+            this.byId("selectedAmountText").setText(this.formatter.formatCurrency(fTotalSelected));
+        },
+        
+        onRefresh: function() {
+            var oTable = this.byId("customerTable");
+            oTable.getBinding("items").refresh();
+            this._loadCustomerStats();
+            MessageToast.show("Customer list refreshed");
         },
 
         onSearch: function (oEvent) {
             var sQuery = oEvent.getParameter("newValue");
-            this._applyFilters(sQuery, this.byId("stageFilter").getSelectedKey());
+            var oSegButton = this.byId("stageFilterSegmented");
+            var sStageKey = oSegButton ? oSegButton.getSelectedKey() : "ALL";
+            this._applyFilters(sQuery, sStageKey);
         },
 
+        onStageFilterChange: function(oEvent) {
+            var sKey = oEvent.getParameter("item").getKey();
+            var sQuery = this.byId("searchField").getValue();
+            this._applyFilters(sQuery, sKey);
+        },
+        
         onFilter: function (oEvent) {
             var sKey = oEvent.getParameter("selectedItem").getKey();
             var sQuery = this.byId("searchField").getValue();
@@ -258,6 +356,33 @@ sap.ui.define([
             } else {
                 MessageToast.show("No phone number available for " + sPayerName);
             }
+        },
+        
+        onQuickGenerateOutreach: function(oEvent) {
+            var that = this;
+            var oButton = oEvent.getSource();
+            var oContext = oButton.getBindingContext();
+            
+            if (!oContext) {
+                MessageBox.error("No customer context found");
+                return;
+            }
+            
+            var sPayerName = oContext.getProperty("PayerName");
+            var oModel = this.getView().getModel();
+            var sPath = oContext.getPath();
+            
+            var oGenBinding = oModel.bindContext(sPath + "/CollectIQService.generateOutreach(...)");
+            oGenBinding.execute().then(function() {
+                MessageToast.show("Draft generated for " + sPayerName);
+                that.byId("customerTable").getBinding("items").refresh();
+            }).catch(function(oError) {
+                MessageBox.error("Error generating draft: " + oError.message);
+            });
+        },
+        
+        onOpenSettings: function() {
+            MessageToast.show("Table settings - Coming soon");
         }
     });
 });

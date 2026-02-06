@@ -1,0 +1,36 @@
+specVersion: '3.0'
+metadata:
+  name: collectiq-ui
+type: application
+framework:
+  name: SAPUI5
+  version: "1.108.0"
+  libraries:
+    - name: sap.m
+    - name: sap.ui.core
+    - name: sap.f
+    - name: sap.uxap
+    - name: sap.viz
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"
+  customTasks:
+    - name: ui5-tooling-transpile
+      afterTask: replaceVersion
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+        backend:
+          - path: /odata/v4/collect-iq
+            url: http://localhost:4004
+            destination: srv-api

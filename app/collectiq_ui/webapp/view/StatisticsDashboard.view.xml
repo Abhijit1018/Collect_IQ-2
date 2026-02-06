@@ -4,187 +4,497 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:layout="sap.ui.layout"
+    xmlns:f="sap.f"
     xmlns:viz="sap.viz.ui5.controls"
     xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
     xmlns:viz.data="sap.viz.ui5.data"
     height="100%">
     
-    <Page id="statisticsPage" title="Statistics Dashboard" showNavButton="true" navButtonPress="onNavBack">
+    <Page id="statisticsPage" title="CollectIQ Analytics Dashboard" showNavButton="false" class="sapUiResponsiveContentPadding">
+        
+        <!-- Header Toolbar with Navigation -->
+        <customHeader>
+            <OverflowToolbar>
+                <Title text="CollectIQ Analytics" level="H3"/>
+                <ToolbarSpacer/>
+                
+                <!-- Quick Navigation Buttons -->
+                <Button 
+                    text="Customers" 
+                    icon="sap-icon://customer"
+                    type="Default"
+                    press="onNavToCustomers"
+                    tooltip="View all customers"/>
+                <Button 
+                    text="Follow-ups" 
+                    icon="sap-icon://appointment"
+                    type="Default"
+                    press="onNavToFollowups"
+                    tooltip="View scheduled follow-ups"/>
+                <Button 
+                    text="Call History" 
+                    icon="sap-icon://phone"
+                    type="Default"
+                    press="onNavToCallHistory"
+                    tooltip="View call transcripts"/>
+                <ToolbarSeparator/>
+                <Button 
+                    icon="sap-icon://refresh"
+                    type="Transparent"
+                    press="onRefresh"
+                    tooltip="Refresh dashboard data"/>
+            </OverflowToolbar>
+        </customHeader>
+        
         <content>
-            <ScrollContainer height="100%" vertical="true">
-                
-                <!-- Summary Cards Section -->
-                <layout:Grid defaultSpan="L3 M6 S12" class="sapUiSmallMargin">
+            <ScrollContainer height="100%" vertical="true" horizontal="false">
+                <VBox class="sapUiSmallMargin">
                     
-                    <!-- Total Payers Card -->
-                    <GenericTile
-                        header="Total Payers"
-                        subheader="Active Accounts"
-                        press="onCardPress">
-                        <TileContent>
-                            <NumericContent
-                                value="{stats>/totalPayers}"
-                                valueColor="Good"
-                                icon="sap-icon://customer"/>
-                        </TileContent>
-                    </GenericTile>
+                    <!-- ===================== SUMMARY CARDS SECTION ===================== -->
+                    <Panel headerText="Key Performance Indicators" class="sapUiSmallMarginBottom">
+                        <layout:Grid defaultSpan="XL2 L3 M6 S12" class="sapUiSmallMargin">
+                            
+                            <!-- Total Payers Card -->
+                            <GenericTile
+                                header="Total Payers"
+                                subheader="Active Accounts"
+                                press="onTilePress"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/totalPayers}"
+                                        valueColor="Good"
+                                        icon="sap-icon://customer"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                            
+                            <!-- Total Outstanding Card -->
+                            <GenericTile
+                                header="Total Outstanding"
+                                subheader="All Unpaid Amount"
+                                press="onOutstandingPress"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/totalOutstandingFormatted}"
+                                        valueColor="Error"
+                                        scale=""
+                                        indicator="{= ${stats>/totalOutstanding} > 100000 ? 'Up' : 'None'}"
+                                        icon="sap-icon://money-bills"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                            
+                            <!-- Calls Today Card -->
+                            <GenericTile
+                                header="Calls Today"
+                                subheader="Voice Outreach"
+                                press="onCallsPress"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/callsToday}"
+                                        valueColor="Neutral"
+                                        icon="sap-icon://phone"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                            
+                            <!-- Emails Today Card -->
+                            <GenericTile
+                                header="Emails Today"
+                                subheader="Email Outreach"
+                                press="onEmailsPress"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/emailsToday}"
+                                        valueColor="Neutral"
+                                        icon="sap-icon://email"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                            
+                            <!-- Success Rate Card -->
+                            <GenericTile
+                                header="Success Rate"
+                                subheader="Response Rate"
+                                press="onSuccessRatePress"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/successRate}"
+                                        valueColor="{= ${stats>/successRate} >= 50 ? 'Good' : (${stats>/successRate} >= 25 ? 'Critical' : 'Error')}"
+                                        scale="%"
+                                        icon="sap-icon://trend-up"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                            
+                            <!-- Pending Follow-ups Card -->
+                            <GenericTile
+                                header="Pending Follow-ups"
+                                subheader="Scheduled Callbacks"
+                                press="onNavToFollowups"
+                                class="sapUiTinyMarginBegin sapUiTinyMarginTop">
+                                <TileContent>
+                                    <NumericContent
+                                        value="{stats>/pendingFollowups}"
+                                        valueColor="Warning"
+                                        icon="sap-icon://appointment"
+                                        withMargin="false"/>
+                                </TileContent>
+                            </GenericTile>
+                        </layout:Grid>
+                    </Panel>
                     
-                    <!-- Total Outstanding Card -->
-                    <GenericTile
-                        header="Total Outstanding"
-                        subheader="Unpaid Invoices">
-                        <TileContent>
-                            <NumericContent
-                                value="{stats>/totalOutstanding}"
-                                valueColor="Error"
-                                scale="M"
-                                icon="sap-icon://cart"
-                                withMargin="false"/>
-                        </TileContent>
-                    </GenericTile>
+                    <!-- ===================== STAGE DISTRIBUTION SECTION ===================== -->
+                    <Panel headerText="Collection Stage Analysis" class="sapUiSmallMarginBottom">
+                        <layout:Grid defaultSpan="XL6 L6 M12 S12">
+                            
+                            <!-- Stage Distribution Donut Chart -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Payers by Stage" level="H5"/>
+                                    <ToolbarSpacer/>
+                                    <SegmentedButton id="stageChartType" selectionChange="onStageChartTypeChange">
+                                        <items>
+                                            <SegmentedButtonItem key="donut" icon="sap-icon://donut-chart" tooltip="Donut Chart"/>
+                                            <SegmentedButtonItem key="bar" icon="sap-icon://horizontal-bar-chart" tooltip="Bar Chart"/>
+                                        </items>
+                                    </SegmentedButton>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="stageDistChart"
+                                    width="100%"
+                                    height="350px"
+                                    vizType="donut"
+                                    selectData="onChartSelectData">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{stageDist>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition 
+                                                    name="Stage" 
+                                                    value="{stageDist>stage}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition 
+                                                    name="Payers" 
+                                                    value="{stageDist>count}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="size" type="Measure" values="Payers"/>
+                                        <viz.feeds:FeedItem uid="color" type="Dimension" values="Stage"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                            
+                            <!-- Stage Amount Breakdown -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Outstanding by Stage" level="H5"/>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="stageAmountChart"
+                                    width="100%"
+                                    height="350px"
+                                    vizType="stacked_column"
+                                    selectData="onChartSelectData">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{stageDist>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition 
+                                                    name="Stage" 
+                                                    value="{stageDist>stage}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition 
+                                                    name="Amount" 
+                                                    value="{stageDist>totalAmount}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Amount"/>
+                                        <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Stage"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                        </layout:Grid>
+                    </Panel>
                     
-                    <!-- Calls Today Card -->
-                    <GenericTile
-                        header="Calls Today"
-                        subheader="Outreach Activity">
-                        <TileContent>
-                            <NumericContent
-                                value="{stats>/callsToday}"
-                                valueColor="Neutral"
-                                icon="sap-icon://phone"/>
-                        </TileContent>
-                    </GenericTile>
-                    
-                    <!-- Success Rate Card -->
-                    <GenericTile
-                        header="Success Rate"
-                        subheader="Response Rate">
-                        <TileContent>
-                            <NumericContent
-                                value="{stats>/successRate}"
-                                valueColor="Good"
-                                scale="%"
-                                icon="sap-icon://sales-quote"/>
-                        </TileContent>
-                    </GenericTile>
-                </layout:Grid>
-                
-                <!-- Charts Section -->
-                <VBox class="sapUiMediumMarginTop">
-                    
-                    <!-- Outreach Timeline Chart -->
-                    <Panel headerText="Outreach Activity (Last 30 Days)" class="sapUiSmallMargin">
+                    <!-- ===================== OUTREACH TIMELINE SECTION ===================== -->
+                    <Panel headerText="Outreach Activity Timeline" class="sapUiSmallMarginBottom">
+                        <Toolbar>
+                            <Title text="Outreach Trends (Last 30 Days)" level="H5"/>
+                            <ToolbarSpacer/>
+                            <SegmentedButton id="timelineChartType" selectionChange="onTimelineChartTypeChange">
+                                <items>
+                                    <SegmentedButtonItem key="line" icon="sap-icon://line-chart" tooltip="Line Chart"/>
+                                    <SegmentedButtonItem key="area" icon="sap-icon://area-chart" tooltip="Area Chart"/>
+                                    <SegmentedButtonItem key="bar" icon="sap-icon://bar-chart" tooltip="Bar Chart"/>
+                                </items>
+                            </SegmentedButton>
+                        </Toolbar>
                         <viz:VizFrame
                             id="outreachTimelineChart"
                             width="100%"
                             height="400px"
-                            vizType="line">
+                            vizType="line"
+                            selectData="onTimelineSelect">
                             <viz:dataset>
                                 <viz.data:FlattenedDataset data="{timeline>/}">
                                     <viz.data:dimensions>
-                                        <viz.data:DimensionDefinition 
-                                            name="Date" 
-                                            value="{timeline>date}"/>
+                                        <viz.data:DimensionDefinition name="Date" value="{timeline>date}"/>
                                     </viz.data:dimensions>
                                     <viz.data:measures>
-                                        <viz.data:MeasureDefinition 
-                                            name="Email" 
-                                            value="{timeline>email}"/>
-                                        <viz.data:MeasureDefinition 
-                                            name="Call" 
-                                            value="{timeline>call}"/>
-                                        <viz.data:MeasureDefinition 
-                                            name="SMS" 
-                                            value="{timeline>sms}"/>
+                                        <viz.data:MeasureDefinition name="Email" value="{timeline>email}"/>
+                                        <viz.data:MeasureDefinition name="Call" value="{timeline>call}"/>
+                                        <viz.data:MeasureDefinition name="SMS" value="{timeline>sms}"/>
                                     </viz.data:measures>
                                 </viz.data:FlattenedDataset>
                             </viz:dataset>
                             <viz:feeds>
-                                <viz.feeds:FeedItem 
-                                    uid="valueAxis" 
-                                    type="Measure" 
-                                    values="Email,Call,SMS"/>
-                                <viz.feeds:FeedItem 
-                                    uid="categoryAxis" 
-                                    type="Dimension" 
-                                    values="Date"/>
+                                <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Email,Call,SMS"/>
+                                <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Date"/>
                             </viz:feeds>
                         </viz:VizFrame>
                     </Panel>
                     
-                    <!-- Payment Distribution Chart -->
-                    <Panel headerText="Payment Status Distribution" class="sapUiSmallMargin">
-                        <viz:VizFrame
-                            id="paymentDistChart"
-                            width="100%"
-                            height="400px"
-                            vizType="donut">
-                            <viz:dataset>
-                                <viz.data:FlattenedDataset data="{paymentDist>/}">
-                                    <viz.data:dimensions>
-                                        <viz.data:DimensionDefinition 
-                                            name="Status" 
-                                            value="{paymentDist>status}"/>
-                                    </viz.data:dimensions>
-                                    <viz.data:measures>
-                                        <viz.data:MeasureDefinition 
-                                            name="Count" 
-                                            value="{paymentDist>count}"/>
-                                    </viz.data:measures>
-                                </viz.data:FlattenedDataset>
-                            </viz:dataset>
-                            <viz:feeds>
-                                <viz.feeds:FeedItem 
-                                    uid="size" 
-                                    type="Measure" 
-                                    values="Count"/>
-                                <viz.feeds:FeedItem 
-                                    uid="color" 
-                                    type="Dimension" 
-                                    values="Status"/>
-                            </viz:feeds>
-                        </viz:VizFrame>
+                    <!-- ===================== PAYMENT & AGING SECTION ===================== -->
+                    <Panel headerText="Payment Analysis" class="sapUiSmallMarginBottom">
+                        <layout:Grid defaultSpan="XL6 L6 M12 S12">
+                            
+                            <!-- Payment Distribution -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Payment Status Distribution" level="H5"/>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="paymentDistChart"
+                                    width="100%"
+                                    height="350px"
+                                    vizType="pie"
+                                    selectData="onPaymentChartSelect">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{paymentDist>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition name="Status" value="{paymentDist>status}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition name="Count" value="{paymentDist>count}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="size" type="Measure" values="Count"/>
+                                        <viz.feeds:FeedItem uid="color" type="Dimension" values="Status"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                            
+                            <!-- Aging Analysis -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Outstanding by Age (Days Past Due)" level="H5"/>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="agingAnalysisChart"
+                                    width="100%"
+                                    height="350px"
+                                    vizType="column"
+                                    selectData="onAgingChartSelect">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{aging>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition name="Age Bucket" value="{aging>ageBucket}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition name="Amount" value="{aging>totalAmount}"/>
+                                                <viz.data:MeasureDefinition name="Invoice Count" value="{aging>invoiceCount}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Amount,Invoice Count"/>
+                                        <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Age Bucket"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                        </layout:Grid>
                     </Panel>
                     
-                    <!-- Aging Analysis Chart -->
-                    <Panel headerText="Outstanding Amount by Age" class="sapUiSmallMargin">
-                        <viz:VizFrame
-                            id="agingAnalysisChart"
-                            width="100%"
-                            height="400px"
-                            vizType="column">
-                            <viz:dataset>
-                                <viz.data:FlattenedDataset data="{aging>/}">
-                                    <viz.data:dimensions>
-                                        <viz.data:DimensionDefinition 
-                                            name="Age Bucket" 
-                                            value="{aging>ageBucket}"/>
-                                    </viz.data:dimensions>
-                                    <viz.data:measures>
-                                        <viz.data:MeasureDefinition 
-                                            name="Amount" 
-                                            value="{aging>totalAmount}"/>
-                                        <viz.data:MeasureDefinition 
-                                            name="Invoice Count" 
-                                            value="{aging>invoiceCount}"/>
-                                    </viz.data:measures>
-                                </viz.data:FlattenedDataset>
-                            </viz:dataset>
-                            <viz:feeds>
-                                <viz.feeds:FeedItem 
-                                    uid="valueAxis" 
-                                    type="Measure" 
-                                    values="Amount,Invoice Count"/>
-                                <viz.feeds:FeedItem 
-                                    uid="categoryAxis" 
-                                    type="Dimension" 
-                                    values="Age Bucket"/>
-                            </viz:feeds>
-                        </viz:VizFrame>
+                    <!-- ===================== CALL SENTIMENT ANALYSIS SECTION ===================== -->
+                    <Panel headerText="Call Analytics" class="sapUiSmallMarginBottom">
+                        <layout:Grid defaultSpan="XL4 L4 M6 S12">
+                            
+                            <!-- Sentiment Distribution -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Sentiment Distribution" level="H5"/>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="sentimentDistChart"
+                                    width="100%"
+                                    height="300px"
+                                    vizType="donut"
+                                    selectData="onSentimentSelect">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{sentiment>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition name="Sentiment" value="{sentiment>sentiment}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition name="Calls" value="{sentiment>count}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="size" type="Measure" values="Calls"/>
+                                        <viz.feeds:FeedItem uid="color" type="Dimension" values="Sentiment"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                            
+                            <!-- Call Outcomes -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Call Outcomes" level="H5"/>
+                                </Toolbar>
+                                <viz:VizFrame
+                                    id="callOutcomesChart"
+                                    width="100%"
+                                    height="300px"
+                                    vizType="bar"
+                                    selectData="onOutcomeSelect">
+                                    <viz:dataset>
+                                        <viz.data:FlattenedDataset data="{callOutcomes>/}">
+                                            <viz.data:dimensions>
+                                                <viz.data:DimensionDefinition name="Outcome" value="{callOutcomes>outcome}"/>
+                                            </viz.data:dimensions>
+                                            <viz.data:measures>
+                                                <viz.data:MeasureDefinition name="Count" value="{callOutcomes>count}"/>
+                                            </viz.data:measures>
+                                        </viz.data:FlattenedDataset>
+                                    </viz:dataset>
+                                    <viz:feeds>
+                                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Count"/>
+                                        <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Outcome"/>
+                                    </viz:feeds>
+                                </viz:VizFrame>
+                            </VBox>
+                            
+                            <!-- Promise Stats -->
+                            <VBox>
+                                <Toolbar>
+                                    <Title text="Promise Statistics" level="H5"/>
+                                </Toolbar>
+                                <VBox class="sapUiSmallMargin">
+                                    <ObjectStatus 
+                                        title="Promises Made" 
+                                        text="{stats>/promisesMade}" 
+                                        state="Success" 
+                                        icon="sap-icon://accept"
+                                        class="sapUiSmallMarginBottom"/>
+                                    <ObjectStatus 
+                                        title="Disputes Raised" 
+                                        text="{stats>/disputesRaised}" 
+                                        state="Warning" 
+                                        icon="sap-icon://warning"
+                                        class="sapUiSmallMarginBottom"/>
+                                    <ObjectStatus 
+                                        title="Average Sentiment" 
+                                        text="{stats>/avgSentiment}" 
+                                        state="{= ${stats>/avgSentimentValue} >= 0.6 ? 'Success' : (${stats>/avgSentimentValue} >= 0.4 ? 'Warning' : 'Error')}" 
+                                        icon="sap-icon://feedback"/>
+                                </VBox>
+                            </VBox>
+                        </layout:Grid>
+                    </Panel>
+                    
+                    <!-- ===================== TOP PAYERS SECTION ===================== -->
+                    <Panel headerText="Top Outstanding Accounts" class="sapUiSmallMarginBottom">
+                        <Table
+                            id="topPayersTable"
+                            items="{topPayers>/}"
+                            mode="SingleSelectMaster"
+                            itemPress="onTopPayerPress"
+                            growing="true"
+                            growingThreshold="10">
+                            <headerToolbar>
+                                <OverflowToolbar>
+                                    <Title text="Highest Outstanding Balances" level="H5"/>
+                                    <ToolbarSpacer/>
+                                    <Button text="View All Customers" type="Transparent" press="onNavToCustomers"/>
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column width="5em" hAlign="Center"><Text text="Rank"/></Column>
+                                <Column width="20%"><Text text="Customer"/></Column>
+                                <Column width="15%" hAlign="End"><Text text="Outstanding"/></Column>
+                                <Column width="12%" hAlign="Center"><Text text="Days Overdue"/></Column>
+                                <Column width="12%" hAlign="Center"><Text text="Stage"/></Column>
+                                <Column width="15%"><Text text="Last Contact"/></Column>
+                                <Column width="10%" hAlign="Center"><Text text="Action"/></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem type="Navigation" press="onTopPayerPress">
+                                    <cells>
+                                        <ObjectNumber number="{topPayers>rank}" emphasized="true"/>
+                                        <ObjectIdentifier title="{topPayers>PayerName}" text="{topPayers>PayerId}"/>
+                                        <ObjectNumber 
+                                            number="{topPayers>TotalPastDue}" 
+                                            unit="{topPayers>Currency}"
+                                            state="{= ${topPayers>TotalPastDue} > 50000 ? 'Error' : 'Warning'}"/>
+                                        <ObjectStatus 
+                                            text="{topPayers>MaxDaysPastDue} days"
+                                            state="{= ${topPayers>MaxDaysPastDue} > 60 ? 'Error' : (${topPayers>MaxDaysPastDue} > 30 ? 'Warning' : 'Success')}"/>
+                                        <ObjectStatus 
+                                            text="{topPayers>Stage}"
+                                            state="{= ${topPayers>Stage} === 'STAGE_3' ? 'Error' : (${topPayers>Stage} === 'STAGE_2' ? 'Warning' : 'Success')}"/>
+                                        <Text text="{topPayers>LastOutreachStatus}"/>
+                                        <Button icon="sap-icon://phone" type="Transparent" press="onQuickCall" tooltip="Quick Call"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </Panel>
+                    
+                    <!-- ===================== RECENT ACTIVITY SECTION ===================== -->
+                    <Panel headerText="Recent Activity Feed" class="sapUiSmallMarginBottom">
+                        <List
+                            id="activityFeed"
+                            items="{activity>/}"
+                            growing="true"
+                            growingThreshold="5">
+                            <items>
+                                <FeedListItem
+                                    sender="{activity>type}"
+                                    text="{activity>description}"
+                                    timestamp="{activity>timestamp}"
+                                    icon="{= ${activity>type} === 'call' ? 'sap-icon://phone' : (${activity>type} === 'email' ? 'sap-icon://email' : 'sap-icon://appointment')}"/>
+                            </items>
+                        </List>
                     </Panel>
                     
                 </VBox>
             </ScrollContainer>
         </content>
+        
+        <!-- Footer with Quick Stats -->
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Label text="Last Updated:" class="sapUiTinyMarginEnd"/>
+                <Text text="{stats>/lastUpdated}"/>
+                <ToolbarSeparator/>
+                <Label text="Total Records:" class="sapUiTinyMarginEnd"/>
+                <Text text="{stats>/totalRecords}"/>
+                <ToolbarSpacer/>
+            </OverflowToolbar>
+        </footer>
     </Page>
 </mvc:View>

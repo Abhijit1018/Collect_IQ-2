@@ -1,14 +1,29 @@
 {
   "welcomeFile": "/collectiqui/index.html",
+  "authenticationMethod": "route",
   "routes": [
     {
       "source": "^/collectiqui/(.*)$",
       "target": "$1",
-      "service": "html5-apps-repo-rt"
+      "service": "html5-apps-repo-rt",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/odata/v4/collect-iq/(.*)$",
+      "destination": "srv-api",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
     },
     {
       "source": "^/odata/v4/catalog/(.*)$",
       "destination": "srv-api",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/sap/opu/odata4/(.*)$",
+      "destination": "ZUI_COLLECTIQ_04",
+      "authenticationType": "xsuaa",
       "csrfProtection": false
     }
   ]

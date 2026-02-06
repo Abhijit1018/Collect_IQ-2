@@ -7,223 +7,289 @@
     height="100%">
     
     <Page 
+        id="customersPage"
         showHeader="true"
         enableScrolling="true"
-        class="sapUiNoContentPadding mainPageBg"
+        class="sapUiNoContentPadding customersPageBg"
         tooltip="CollectiQ Customer Collection Management Dashboard">
         
-        <!-- Custom Header -->
+        <!-- Custom Header - Matching Dashboard Theme -->
         <customHeader>
-            <Bar class="collectiqHeader">
-                <contentLeft>
-                    <HBox alignItems="Center" height="100%" class="sapUiLargeMarginEnd">
-                        <core:Icon 
-                            src="sap-icon://customer-financial-fact-sheet" 
-                            size="1.5rem"
-                            color="#fff"
-                            class="sapUiSmallMarginEnd"/>
-                        <Title text="CollectIQ" level="H3" class="headerTitle" tooltip="Customer Collection Management System"/>
-                    </HBox>
-                </contentLeft>
-                <contentMiddle>
-                    <SearchField 
-                        id="searchField"
-                        placeholder="Search by name, ID, or email..."
-                        width="400px"
-                        liveChange="onSearch"
-                        class="headerSearch"
-                        tooltip="Search customers by name, ID, or email address"/>
-                </contentMiddle>
-                <contentRight>
-                    <Button 
-                        text="Dashboard" 
-                        icon="sap-icon://barchart"
-                        press="onNavToDashboard"
-                        tooltip="View Statistics Dashboard"
-                        class="headerNavButton sapUiSmallMarginEnd"/>
-                    <Button 
-                        text="Follow-ups" 
-                        icon="sap-icon://calendar"
-                        press="onNavToFollowups"
-                        tooltip="View Scheduled Follow-ups"
-                        class="headerNavButton sapUiSmallMarginEnd"/>
-                    <Button 
-                        text="Call History" 
-                        icon="sap-icon://history"
-                        press="onNavToCallHistory"
-                        tooltip="View All Analyzed Calls"
-                        class="headerNavButton sapUiSmallMarginEnd"/>
-                    <Avatar initials="JW" displaySize="S" tooltip="Current User: John Watson"/>
-                </contentRight>
-            </Bar>
+            <OverflowToolbar class="customersHeader">
+                <HBox alignItems="Center">
+                    <core:Icon 
+                        src="sap-icon://customer-financial-fact-sheet" 
+                        size="1.5rem"
+                        color="#fff"
+                        class="sapUiSmallMarginEnd"/>
+                    <Title text="CollectIQ" level="H3" class="headerTitleWhite"/>
+                </HBox>
+                <ToolbarSpacer/>
+                <SearchField 
+                    id="searchField"
+                    placeholder="Search customers..."
+                    width="350px"
+                    liveChange="onSearch"
+                    class="headerSearchField"
+                    tooltip="Search by name, ID, or email"/>
+                <ToolbarSpacer/>
+                <Button 
+                    text="Dashboard" 
+                    icon="sap-icon://home"
+                    press="onNavToDashboard"
+                    type="Default"
+                    class="navButton"
+                    tooltip="Go to Analytics Dashboard"/>
+                <Button 
+                    text="Follow-ups" 
+                    icon="sap-icon://appointment"
+                    press="onNavToFollowups"
+                    type="Default"
+                    class="navButton"
+                    tooltip="View Scheduled Follow-ups"/>
+                <Button 
+                    text="Call History" 
+                    icon="sap-icon://phone"
+                    press="onNavToCallHistory"
+                    type="Default"
+                    class="navButton"
+                    tooltip="View Call Transcripts"/>
+                <ToolbarSeparator/>
+                <Button 
+                    icon="sap-icon://refresh"
+                    type="Transparent"
+                    press="onRefresh"
+                    tooltip="Refresh customer list"/>
+            </OverflowToolbar>
         </customHeader>
         
         <content>
-            <!-- Action Toolbar -->
-            <Toolbar class="actionToolbar sapUiMediumMarginTop sapUiMediumMarginBegin sapUiMediumMarginEnd">
-                <Title text="Customer List" level="H4" tooltip="All customers in the collection system"/>
-                <ToolbarSpacer/>
-                <Button 
-                    id="generateOutreachBtn"
-                    text="Generate Outreach" 
-                    icon="sap-icon://create" 
-                    type="Emphasized"
-                    press="onGenerateOutreachAll"
-                    class="sapUiSmallMarginEnd"
-                    tooltip="Create draft outreach messages for all customers with outstanding balances"/>
-                <Button 
-                    id="sendOutreachBtn"
-                    text="Send Outreach" 
-                    icon="sap-icon://email" 
-                    type="Accept"
-                    press="onSendOutreachAll"
-                    tooltip="Send pending outreach messages to all customers"/>
-                <ToolbarSeparator/>
-                <Select
-                    id="stageFilter"
-                    change="onFilter"
-                    tooltip="Filter by Collection Stage"
-                    width="150px">
-                    <core:Item key="ALL" text="All Stages"/>
-                    <core:Item key="STAGE_1" text="New (Stage 1)"/>
-                    <core:Item key="STAGE_2" text="Follow-up (Stage 2)"/>
-                    <core:Item key="STAGE_3" text="Legal (Stage 3)"/>
-                    <core:Item key="RESOLVED" text="Resolved"/>
-                </Select>
-                <Button icon="sap-icon://sort" tooltip="Sort customer list"/>
-                <Button icon="sap-icon://excel-attachment" press="onExportPayers" tooltip="Export customer list to CSV"/>
-            </Toolbar>
-            
-            <!-- Customer Table - Full Width with Extended Info -->
-            <Table
-                id="customerTable"
-                items="{
-                    path: '/Payers',
-                    parameters: {
-                        $expand: 'Invoices'
-                    }
-                }"
-                growing="true"
-                growingThreshold="20"
-                mode="MultiSelect"
-                itemPress="onItemPress"
-                class="collectiqTable sapUiMediumMarginBegin sapUiMediumMarginEnd sapUiMediumMarginBottom sapUiSmallMarginTop"
-                tooltip="Click on any row to see full customer details">
+            <VBox class="sapUiSmallMargin">
                 
-                <columns>
-                    <Column width="7%" hAlign="Center" tooltip="Unique customer identifier" minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline">
-                        <Text text="Customer ID"/>
-                    </Column>
-                    <Column width="14%" hAlign="Center" tooltip="Customer company name and contact phone">
-                        <Text text="Customer"/>
-                    </Column>
-                    <Column width="10%" hAlign="Center" tooltip="Total outstanding amount past due">
-                        <Text text="Past Due"/>
-                    </Column>
-                    <Column width="6%" hAlign="Center" tooltip="Number of overdue days for oldest invoice" minScreenWidth="Tablet" demandPopin="true">
-                        <Text text="Days"/>
-                    </Column>
-                    <Column width="8%" hAlign="Center" tooltip="Current collection stage" minScreenWidth="Tablet" demandPopin="true">
-                        <Text text="Stage"/>
-                    </Column>
-                    <Column width="10%" hAlign="Center" tooltip="Last outreach status and date" minScreenWidth="Desktop" demandPopin="true" popinDisplay="Inline">
-                        <Text text="Last Outreach"/>
-                    </Column>
-                    <Column width="14%" hAlign="Center" tooltip="Primary contact email address" minScreenWidth="Desktop" demandPopin="true">
-                        <Text text="Contact"/>
-                    </Column>
-
-                    <Column width="18%" hAlign="Center" tooltip="Latest outreach draft message preview" minScreenWidth="Desktop" demandPopin="true">
-                        <Text text="Outreach Draft"/>
-                    </Column>
-                    <Column width="5%" hAlign="Center" tooltip="Quick actions for this customer">
-                        <Text text="Actions"/>
-                    </Column>
-                </columns>
+                <!-- Quick Stats Bar -->
+                <HBox justifyContent="SpaceBetween" alignItems="Center" class="quickStatsBar sapUiSmallMarginBottom">
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://customer" size="1.2rem" color="#0056b3" class="sapUiSmallMarginEnd"/>
+                        <Text text="Total Customers: " class="statsLabel"/>
+                        <Text text="{customerStats>/totalCustomers}" class="statsValue"/>
+                    </HBox>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://money-bills" size="1.2rem" color="#dc3545" class="sapUiSmallMarginEnd"/>
+                        <Text text="Total Outstanding: " class="statsLabel"/>
+                        <Text text="{customerStats>/totalOutstanding}" class="statsValueDanger"/>
+                    </HBox>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://warning" size="1.2rem" color="#ffc107" class="sapUiSmallMarginEnd"/>
+                        <Text text="Stage 3 Accounts: " class="statsLabel"/>
+                        <Text text="{customerStats>/stage3Count}" class="statsValueWarning"/>
+                    </HBox>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://email" size="1.2rem" color="#28a745" class="sapUiSmallMarginEnd"/>
+                        <Text text="Pending Outreach: " class="statsLabel"/>
+                        <Text text="{customerStats>/pendingOutreach}" class="statsValueSuccess"/>
+                    </HBox>
+                </HBox>
                 
-                <items>
-                    <ColumnListItem 
-                        type="Navigation"
-                        press="onItemPress"
-                        tooltip="Click to view full details for {PayerName}">
-                        <cells>
-                            <!-- Customer ID -->
-                            <ObjectIdentifier 
-                                title="{PayerId}"
-                                tooltip="Customer ID: {PayerId}"/>
+                <!-- Main Panel with Actions -->
+                <Panel class="customersPanel">
+                    <headerToolbar>
+                        <OverflowToolbar class="customersPanelHeader">
+                            <Title text="Customer Accounts" level="H4" class="panelTitle"/>
+                            <ToolbarSpacer/>
                             
-                            <!-- Customer Name + Phone -->
-                            <VBox tooltip="Customer: {PayerName}&#10;Phone: {ContactPhone}">
-                                <Text text="{PayerName}" class="sapMTextBold"/>
-                                <Text text="{ContactPhone}" class="sapUiTinyMarginTop"/>
-                            </VBox>
+                            <!-- Stage Filter Pills -->
+                            <SegmentedButton id="stageFilterSegmented" selectionChange="onStageFilterChange">
+                                <items>
+                                    <SegmentedButtonItem key="ALL" text="All" tooltip="Show all customers"/>
+                                    <SegmentedButtonItem key="STAGE_1" text="Stage 1" tooltip="New accounts"/>
+                                    <SegmentedButtonItem key="STAGE_2" text="Stage 2" tooltip="Follow-up required"/>
+                                    <SegmentedButtonItem key="STAGE_3" text="Stage 3" tooltip="Escalated accounts"/>
+                                </items>
+                            </SegmentedButton>
                             
-                            <!-- Total Past Due -->
-                            <ObjectNumber
-                                number="{
+                            <ToolbarSeparator/>
+                            
+                            <Button 
+                                id="generateOutreachBtn"
+                                text="Generate Outreach" 
+                                icon="sap-icon://create" 
+                                type="Emphasized"
+                                press="onGenerateOutreachAll"
+                                tooltip="Generate AI drafts for selected customers"/>
+                            <Button 
+                                id="sendOutreachBtn"
+                                text="Send Outreach" 
+                                icon="sap-icon://email-read" 
+                                type="Accept"
+                                press="onSendOutreachAll"
+                                tooltip="Send outreach to selected customers"/>
+                            <Button 
+                                icon="sap-icon://action-settings"
+                                type="Transparent"
+                                press="onOpenSettings"
+                                tooltip="Table settings"/>
+                            <Button 
+                                icon="sap-icon://excel-attachment" 
+                                type="Transparent"
+                                press="onExportPayers" 
+                                tooltip="Export to Excel"/>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    
+                    <content>
+                        <!-- Customer Table - Enhanced -->
+                        <Table
+                            id="customerTable"
+                            items="{
+                                path: '/Payers',
+                                parameters: {
+                                    $expand: 'Invoices'
+                                },
+                                sorter: {
                                     path: 'TotalPastDue',
-                                    formatter: '.formatter.formatCurrency'
-                                }"
-                                unit="{Currency}"
-                                state="{= ${TotalPastDue} > 50000 ? 'Error' : (${TotalPastDue} > 30000 ? 'Warning' : 'Success')}"
-                                tooltip="Total overdue: {TotalPastDue} {Currency}"/>
+                                    descending: true
+                                }
+                            }"
+                            growing="true"
+                            growingThreshold="20"
+                            mode="MultiSelect"
+                            itemPress="onItemPress"
+                            class="customersTable"
+                            sticky="ColumnHeaders"
+                            tooltip="Click on any row to see full customer details">
                             
-                            <!-- Days Past Due -->
-                            <ObjectStatus
-                                text="{MaxDaysPastDue}"
-                                state="{= ${MaxDaysPastDue} > 60 ? 'Error' : (${MaxDaysPastDue} > 30 ? 'Warning' : 'Success')}"
-                                tooltip="{MaxDaysPastDue} days past the oldest invoice due date"/>
+                            <columns>
+                                <Column width="20%" tooltip="Customer company name">
+                                    <Text text="Customer"/>
+                                </Column>
+                                <Column width="12%" hAlign="End" tooltip="Total outstanding amount">
+                                    <Text text="Outstanding"/>
+                                </Column>
+                                <Column width="8%" hAlign="Center" tooltip="Days past due">
+                                    <Text text="Days"/>
+                                </Column>
+                                <Column width="10%" hAlign="Center" tooltip="Collection stage">
+                                    <Text text="Stage"/>
+                                </Column>
+                                <Column width="12%" hAlign="Center" tooltip="Last outreach status" minScreenWidth="Tablet" demandPopin="true">
+                                    <Text text="Status"/>
+                                </Column>
+                                <Column width="20%" tooltip="Contact information" minScreenWidth="Desktop" demandPopin="true">
+                                    <Text text="Contact"/>
+                                </Column>
+                                <Column width="18%" hAlign="Center" tooltip="Quick actions">
+                                    <Text text="Actions"/>
+                                </Column>
+                            </columns>
                             
-                            <!-- Stage -->
-                            <ObjectStatus
-                                text="{Stage}"
-                                state="{= ${Stage} === 'STAGE_3' ? 'Error' : (${Stage} === 'STAGE_2' ? 'Warning' : 'Information')}"
-                                tooltip="Collection Stage: {Stage}"/>
-                            
-                            <!-- Last Outreach -->
-                            <VBox tooltip="Status: {LastOutreachStatus}&#10;Date: {lastOutreachAt}">
-                                <ObjectStatus
-                                    text="{LastOutreachStatus}"
-                                    state="{= ${LastOutreachStatus} === 'SENT' ? 'Success' : (${LastOutreachStatus} === 'PENDING' ? 'Warning' : 'None')}"/>
-                                <Text 
-                                    text="{
-                                        path: 'lastOutreachAt',
-                                        formatter: '.formatter.formatDate'
-                                    }" 
-                                    class="sapUiTinyMarginTop"/>
-                            </VBox>
-                            
-                            <!-- Contact Email -->
-                            <Link 
-                                text="{ContactEmail}" 
-                                href="mailto:{ContactEmail}"
-                                tooltip="Click to send email to {ContactEmail}"/>
-                            
-
-                            
-                            <!-- Outreach Draft Preview -->
-                            <Text 
-                                text="{= ${latestOutreachDraft} ? ${latestOutreachDraft}.substring(0, 60) + '...' : 'No draft'}" 
-                                maxLines="2"
-                                tooltip="{latestOutreachDraft}"/>
-                            
-                            <!-- Quick Actions -->
-                            <HBox>
-                                <Button 
-                                    icon="sap-icon://email" 
-                                    type="Transparent"
-                                    press="onQuickSendOutreach"
-                                    tooltip="Quick send outreach to {PayerName}"/>
-                                <Button 
-                                    icon="sap-icon://phone" 
-                                    type="Transparent"
-                                    press="onQuickCall"
-                                    tooltip="Call {ContactPhone}"/>
-                            </HBox>
-                        </cells>
-                    </ColumnListItem>
-                </items>
-            </Table>
+                            <items>
+                                <ColumnListItem 
+                                    type="Navigation"
+                                    press="onItemPress"
+                                    highlight="{= ${Stage} === 'STAGE_3' ? 'Error' : (${Stage} === 'STAGE_2' ? 'Warning' : 'Success')}"
+                                    tooltip="Click to view details for {PayerName}">
+                                    <cells>
+                                        <!-- Customer Name + ID -->
+                                        <VBox>
+                                            <ObjectIdentifier 
+                                                title="{PayerName}"
+                                                text="{PayerId}"
+                                                titleActive="true"
+                                                titlePress="onItemPress"/>
+                                        </VBox>
+                                        
+                                        <!-- Total Past Due -->
+                                        <ObjectNumber
+                                            number="{
+                                                path: 'TotalPastDue',
+                                                formatter: '.formatter.formatCurrency'
+                                            }"
+                                            unit="{Currency}"
+                                            state="{= ${TotalPastDue} > 50000 ? 'Error' : (${TotalPastDue} > 25000 ? 'Warning' : 'Success')}"
+                                            emphasized="true"/>
+                                        
+                                        <!-- Days Past Due with Progress -->
+                                        <VBox alignItems="Center">
+                                            <ObjectStatus
+                                                text="{MaxDaysPastDue} days"
+                                                state="{= ${MaxDaysPastDue} > 60 ? 'Error' : (${MaxDaysPastDue} > 30 ? 'Warning' : 'Success')}"
+                                                icon="{= ${MaxDaysPastDue} > 60 ? 'sap-icon://warning2' : ''}"/>
+                                        </VBox>
+                                        
+                                        <!-- Stage Badge -->
+                                        <ObjectStatus
+                                            text="{Stage}"
+                                            state="{= ${Stage} === 'STAGE_3' ? 'Error' : (${Stage} === 'STAGE_2' ? 'Warning' : 'Success')}"
+                                            icon="{= ${Stage} === 'STAGE_3' ? 'sap-icon://alert' : (${Stage} === 'STAGE_2' ? 'sap-icon://notification-2' : 'sap-icon://accept')}"
+                                            inverted="true"/>
+                                        
+                                        <!-- Last Outreach Status -->
+                                        <VBox>
+                                            <ObjectStatus
+                                                text="{LastOutreachStatus}"
+                                                state="{= ${LastOutreachStatus} === 'SENT' || ${LastOutreachStatus} === 'Call Completed' ? 'Success' : (${LastOutreachStatus} === 'PENDING' ? 'Warning' : 'Information')}"/>
+                                            <Text 
+                                                text="{
+                                                    path: 'lastOutreachAt',
+                                                    formatter: '.formatter.formatDate'
+                                                }" 
+                                                class="sapUiTinyMarginTop dateText"/>
+                                        </VBox>
+                                        
+                                        <!-- Contact Info -->
+                                        <VBox>
+                                            <Link 
+                                                text="{ContactEmail}" 
+                                                href="mailto:{ContactEmail}"
+                                                wrapping="true"/>
+                                            <Text 
+                                                text="{ContactPhone}" 
+                                                class="sapUiTinyMarginTop phoneText"/>
+                                        </VBox>
+                                        
+                                        <!-- Quick Actions -->
+                                        <HBox justifyContent="Center">
+                                            <Button 
+                                                icon="sap-icon://create" 
+                                                type="Transparent"
+                                                press="onQuickGenerateOutreach"
+                                                tooltip="Generate draft"/>
+                                            <Button 
+                                                icon="sap-icon://email" 
+                                                type="Transparent"
+                                                press="onQuickSendOutreach"
+                                                tooltip="Send outreach"/>
+                                            <Button 
+                                                icon="sap-icon://phone" 
+                                                type="Transparent"
+                                                press="onQuickCall"
+                                                tooltip="Call customer"/>
+                                            <Button 
+                                                icon="sap-icon://detail-view" 
+                                                type="Transparent"
+                                                press="onItemPress"
+                                                tooltip="View details"/>
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+            </VBox>
         </content>
+        
+        <!-- Footer -->
+        <footer>
+            <OverflowToolbar class="customersFooter">
+                <ToolbarSpacer/>
+                <Label text="Selected:" class="sapUiTinyMarginEnd"/>
+                <Text id="selectedCountText" text="0 customers"/>
+                <ToolbarSeparator/>
+                <Label text="Total Outstanding Selected:" class="sapUiTinyMarginEnd"/>
+                <Text id="selectedAmountText" text="$0"/>
+                <ToolbarSpacer/>
+            </OverflowToolbar>
+        </footer>
     </Page>
 </mvc:View>

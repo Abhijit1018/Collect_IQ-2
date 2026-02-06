@@ -480,3 +480,398 @@
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-dark);
 }
+
+/* ===================== ENHANCED DASHBOARD STYLES ===================== */
+
+/* Dashboard Page */
+#statisticsPage {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+}
+
+/* KPI Panel */
+#statisticsPage .sapMPanel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 16px;
+}
+
+#statisticsPage .sapMPanelHdr {
+    background: linear-gradient(90deg, #0056b3 0%, #0077cc 100%);
+    color: white !important;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+}
+
+/* Generic Tiles - Enhanced */
+#statisticsPage .sapMGT {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+}
+
+#statisticsPage .sapMGT:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+#statisticsPage .sapMGTHdrTxt {
+    font-weight: 600;
+    color: #1a365d;
+}
+
+/* Chart containers */
+#statisticsPage .sapVizFrame {
+    border-radius: 8px;
+    background: white;
+}
+
+/* Dashboard Header Toolbar */
+#statisticsPage .sapMOTB {
+    background: linear-gradient(90deg, #0056b3 0%, #0077cc 100%);
+    padding: 8px 16px;
+}
+
+#statisticsPage .sapMOTB .sapMTitle {
+    color: white !important;
+    font-weight: 700;
+}
+
+#statisticsPage .sapMOTB .sapMBtn {
+    margin-left: 8px;
+}
+
+#statisticsPage .sapMOTB .sapMBtnDefault .sapMBtnInner {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+}
+
+#statisticsPage .sapMOTB .sapMBtnDefault:hover .sapMBtnInner {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+#statisticsPage .sapMOTB .sapMBtnTransparent .sapMBtnIcon {
+    color: white !important;
+}
+
+/* Top Payers Table */
+#topPayersTable {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#topPayersTable .sapMListTblHeader {
+    background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 100%);
+}
+
+#topPayersTable .sapMListTblRow:hover {
+    background: #f0f9ff !important;
+}
+
+/* Activity Feed */
+#activityFeed .sapMFeedListItem {
+    border-left: 3px solid #0056b3;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: white;
+}
+
+/* Chart Toolbar */
+#statisticsPage .sapMTB {
+    background: transparent;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+
+/* Segmented Buttons for chart type switching */
+#statisticsPage .sapMSegB {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+#statisticsPage .sapMSegBBtn.sapMSegBBtnSel {
+    background: #0056b3 !important;
+}
+
+/* Footer */
+#statisticsPage .sapMPageFooter {
+    background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 100%);
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    #statisticsPage .sapMGT {
+        width: 100% !important;
+    }
+}
+
+/* ============================================ */
+/* Customer Page Styles - Premium Theme */
+/* ============================================ */
+
+/* Customer Page Background */
+.customersPageBg {
+    background: linear-gradient(135deg, #f8fafc 0%, #e8f0fe 100%);
+    min-height: 100vh;
+}
+
+/* Customer Page Header */
+.customersHeader {
+    background: linear-gradient(90deg, #0056b3 0%, #0077cc 50%, #0056b3 100%) !important;
+    padding: 10px 24px !important;
+    border-bottom: 3px solid #003d80;
+    box-shadow: 0 4px 20px rgba(0, 86, 179, 0.3);
+}
+
+.customersHeader .sapMTitle,
+.headerTitleWhite {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1.4rem !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.headerSearchField .sapMInputBaseInner {
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Navigation Buttons in Header */
+.navButton .sapMBtnInner {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.navButton:hover .sapMBtnInner {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+.navButton .sapMBtnIcon {
+    color: white !important;
+}
+
+/* Quick Stats Bar */
+.quickStatsBar {
+    background: linear-gradient(90deg, white 0%, #f8fafc 100%);
+    border-radius: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 2px 12px rgba(0, 86, 179, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.quickStatsBar .statsLabel {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.quickStatsBar .statsValue {
+    color: #0056b3;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-right: 24px;
+}
+
+.quickStatsBar .statsValueDanger {
+    color: #dc3545;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-right: 24px;
+}
+
+.quickStatsBar .statsValueWarning {
+    color: #f59e0b;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-right: 24px;
+}
+
+.quickStatsBar .statsValueSuccess {
+    color: #10b981;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Customer Panel */
+.customersPanel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 86, 179, 0.1);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.customersPanelHeader {
+    background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 100%) !important;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 12px 20px !important;
+}
+
+.customersPanelHeader .panelTitle {
+    color: #1a365d !important;
+    font-weight: 600 !important;
+}
+
+/* Stage Filter Segmented Button */
+#stageFilterSegmented {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+#stageFilterSegmented .sapMSegBBtn {
+    border-radius: 6px !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#stageFilterSegmented .sapMSegBBtnSel {
+    background: #0056b3 !important;
+    color: white !important;
+}
+
+#stageFilterSegmented .sapMSegBBtn:not(.sapMSegBBtnSel):hover {
+    background: #e2e8f0 !important;
+}
+
+/* Customer Table - Enhanced */
+.customersTable {
+    background: white;
+}
+
+.customersTable .sapMListTblHeader {
+    background: linear-gradient(90deg, #1a365d 0%, #2c5282 100%) !important;
+}
+
+.customersTable .sapMListTblHeaderCell {
+    color: white !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.customersTable .sapMListTblRow {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.customersTable .sapMListTblRow:hover {
+    background: linear-gradient(90deg, #f0f9ff 0%, #e8f4fd 100%) !important;
+    transform: translateX(4px);
+}
+
+.customersTable .sapMListTblCell {
+    padding: 14px 12px;
+    vertical-align: middle;
+}
+
+/* Row Highlights by Stage */
+.customersTable .sapMListTblRow[data-sap-ui-item-highlight="Error"] {
+    border-left: 4px solid #dc3545;
+}
+
+.customersTable .sapMListTblRow[data-sap-ui-item-highlight="Warning"] {
+    border-left: 4px solid #f59e0b;
+}
+
+.customersTable .sapMListTblRow[data-sap-ui-item-highlight="Success"] {
+    border-left: 4px solid #10b981;
+}
+
+/* Stage badges */
+.customersTable .sapMObjStatusInverted {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Date and Phone text styling */
+.dateText {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.phoneText {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+/* Action buttons in table */
+.customersTable .sapMBtnTransparent:hover .sapMBtnInner {
+    background: #f0f9ff !important;
+    border-radius: 50%;
+}
+
+.customersTable .sapMBtnIcon {
+    color: #0056b3;
+}
+
+/* Customer Footer */
+.customersFooter {
+    background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 100%) !important;
+    border-top: 2px solid #e2e8f0;
+    padding: 8px 24px !important;
+}
+
+.customersFooter .sapMLabel,
+.customersFooter .sapMText {
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Emphasized buttons */
+#generateOutreachBtn .sapMBtnInner {
+    background: linear-gradient(135deg, #0056b3 0%, #0077cc 100%) !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 86, 179, 0.3);
+    transition: all 0.3s ease;
+}
+
+#generateOutreachBtn:hover .sapMBtnInner {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 86, 179, 0.4) !important;
+}
+
+#sendOutreachBtn .sapMBtnInner {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    transition: all 0.3s ease;
+}
+
+#sendOutreachBtn:hover .sapMBtnInner {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* ObjectNumber styling for rank */
+.customersTable .sapMObjectNumberEmphasis {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Links in table */
+.customersTable .sapMLnk {
+    color: #0056b3;
+    font-weight: 500;
+}
+
+.customersTable .sapMLnk:hover {
+    color: #003d80;
+    text-decoration: underline;
+}

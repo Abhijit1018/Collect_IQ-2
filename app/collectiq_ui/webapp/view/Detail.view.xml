@@ -303,8 +303,7 @@
                                         <cells>
                                             <Text text="{
                                                 path: 'callDate',
-                                                type: 'sap.ui.model.type.DateTime',
-                                                formatOptions: { pattern: 'dd/MM/yyyy HH:mm' }
+                                                formatter: '.formatter.formatDateTime'
                                             }"/>
                                             <Text text="{
                                                 path: 'duration',

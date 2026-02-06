@@ -1,12 +1,37 @@
 {
-  "xsappname": "collectiq-ab-104",
+  "xsappname": "collectiq",
   "tenant-mode": "dedicated",
-  "description": "Security profile of called application",
-  "scopes": [],
-  "role-templates": [],
+  "description": "Security profile for CollectIQ Application",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.admin",
+      "description": "Administrator scope"
+    },
+    {
+      "name": "$XSAPPNAME.user",
+      "description": "User scope"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "CollectIQAdmin",
+      "description": "CollectIQ Administrator",
+      "scope-references": [
+        "$XSAPPNAME.admin",
+        "$XSAPPNAME.user"
+      ]
+    },
+    {
+      "name": "CollectIQUser",
+      "description": "CollectIQ User",
+      "scope-references": [
+        "$XSAPPNAME.user"
+      ]
+    }
+  ],
   "attributes": [],
   "oauth2-configuration": {
-    "redirectUris": [
+    "redirect-uris": [
       "http://localhost:4004/**",
       "https://*.trial.applicationstudio.cloud.sap/**",
       "https://*.cfapps.us10-001.hana.ondemand.com/**",

@@ -61,17 +61,11 @@
                                 text="{payer/company}"/>
                             <Text text="{
                                 path: 'scheduledDate',
-                                type: 'sap.ui.model.type.Date',
-                                formatOptions: {
-                                    pattern: 'dd/MM/yyyy'
-                                }
+                                formatter: '.formatDate'
                             }"/>
                             <Text text="{
                                 path: 'scheduledTime',
-                                type: 'sap.ui.model.type.Time',
-                                formatOptions: {
-                                    pattern: 'HH:mm'
-                                }
+                                formatter: '.formatTime'
                             }"/>
                             <Text text="{reason}"/>
                             <ObjectStatus

@@ -81,8 +81,13 @@
             },
             "routes": [
                 {
-                    "name": "main",
+                    "name": "dashboard",
                     "pattern": "",
+                    "target": "dashboard"
+                },
+                {
+                    "name": "main",
+                    "pattern": "customers",
                     "target": "main"
                 },
                 {
@@ -90,11 +95,7 @@
                     "pattern": "customer/{PayerId}",
                     "target": "detail"
                 },
-                {
-                    "name": "dashboard",
-                    "pattern": "dashboard",
-                    "target": "dashboard"
-                },
+
                 {
                     "name": "callResults",
                     "pattern": "calls/{callId}",
