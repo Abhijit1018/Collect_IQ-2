@@ -1,4 +1,5 @@
 const cds = require('@sap/cds');
+const path = require('path');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
@@ -7,9 +8,17 @@ const expressWs = require('express-ws');
 const WebSocket = require('ws');
 const stage1Template = require('./templates/stage1');
 const stage2Template = require('./templates/stage2');
-const stage3Template = require('./templates/stage3');
-const OpenAI = require('openai');
-require('dotenv').config();
+
+// Inline voice script generator (no external template dependency)
+const generateVoiceScript = (payerName, amount, currency) => {
+  return `Hello, this is Vegah CollectIQ calling for ${payerName}. You have an outstanding balance of ${amount} ${currency || 'USD'}. Is this a good time to discuss your payment options?`;
+};
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Load .env from project root (fixes path issues when running from srv/)
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+console.log(`>>> [ENV] DEEPGRAM_API_KEY loaded: ${process.env.DEEPGRAM_API_KEY ? 'YES' : 'NO'}`);
+console.log(`>>> [ENV] GEMINI_API_KEY loaded: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
 
 module.exports = cds.service.impl(async function () {
   const { Invoices, Payers, OutreachHistory, CallTranscripts, ScheduledFollowups, PaymentStatusLog } = this.entities;
@@ -104,9 +113,9 @@ module.exports = cds.service.impl(async function () {
       finalDraft = t.body;
       subjectLine = t.subject;
     } else {
-      const t = stage3Template(payer.PayerName, payer.TotalPastDue, payer.Currency);
-      finalDraft = t.body;
-      subjectLine = t.subject;
+      // Stage 3: Urgent collection call script
+      subjectLine = 'Urgent: Payment Reminder - Action Required';
+      finalDraft = generateVoiceScript(payer.PayerName, payer.TotalPastDue, payer.Currency);
     }
 
     await UPDATE(Payers)
@@ -307,11 +316,11 @@ module.exports = cds.service.impl(async function () {
       }
     },
     null,
-    false, // DISABLED: Set to true to enable auto-start
+    true, // ENABLED: Auto-start
     'Asia/Kolkata'
   );
 
-  console.log('[SCHEDULER] Cron job DISABLED - set start parameter to true to enable');
+  console.log('[SCHEDULER] Cron job ENABLED - running every 2 minutes');
   console.log('[SCHEDULER] Sends: STAGE_1 & STAGE_2 = Email, STAGE_3 = Twilio Call');
   console.log('[SCHEDULER] Env check - TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'SET' : 'MISSING');
   console.log('[SCHEDULER] Env check - NGROK_URL:', process.env.NGROK_URL ? 'SET' : 'MISSING');
@@ -460,6 +469,7 @@ module.exports = cds.service.impl(async function () {
   // --- G. WEBHOOK HANDLERS (INSIDE SERVICE FUNCTION) ---
   const app = cds.app;
   const bodyParser = require('body-parser');
+  app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
   // Initialize express-ws for WebSocket support
@@ -502,10 +512,13 @@ module.exports = cds.service.impl(async function () {
       const twiml = new (require('twilio').twiml.VoiceResponse)();
 
       // Connect to WebSocket media stream for real-time audio handling
-      const mediaStream = twiml.connect();
-      mediaStream.stream({
-        url: `wss://${req.get('host')}/collect-iq/media-stream?payerId=${payerId}`,
+      // Use customParameters to reliably pass payerId (Twilio strips URL query params)
+      const connect = twiml.connect();
+      const stream = connect.stream({
+        url: `wss://${ngrokUrl.replace('https://', '')}/collect-iq/media-stream`,
       });
+      // Pass payerId via customParameters - Twilio includes these in the 'start' event
+      stream.parameter({ name: 'payerId', value: payerId });
 
       const response = twiml.toString();
       console.log(`>>> [VOICE] Sending TwiML response with media stream`);
@@ -694,8 +707,176 @@ module.exports = cds.service.impl(async function () {
     res.send('Test route works! Routes are registering correctly.');
   });
 
-  // ========== TWILIO MEDIA STREAM + OPENAI REALTIME API ==========
-  // Real-time voice conversation powered by OpenAI
+  // SHADOW MODE (Gemini Simulation)
+  app.post('/collect-iq/chat-simulation', async (req, res) => {
+    console.log(`\n>>> [SHADOW-MODE] ========== CHAT SIMULATION ==========`);
+    try {
+      const { text, payerId } = req.body;
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      // Define Tools for Gemini
+      const tools = [
+        {
+          function_declarations: [
+            {
+              name: "schedule_followup",
+              description: "Schedules a follow-up call or reminder for the customer.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  date: {
+                    type: "STRING",
+                    description: "The date for the follow-up in YYYY-MM-DD format. If the user says 'Monday', calculate the date of the next Monday."
+                  },
+                  reason: {
+                    type: "STRING",
+                    description: "The reason for the follow-up (e.g., 'Payment promise', 'Call back requested')."
+                  }
+                },
+                required: ["date"]
+              }
+            }
+          ]
+        }
+      ];
+
+      // Using 'gemini-2.0-flash' as it is the available model
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        tools: tools,
+        toolConfig: { functionCallingConfig: { mode: "AUTO" } }
+      });
+
+      const db = await cds.connect.to('db');
+      const payer = await db.run(SELECT.one.from('my.collectiq.Payers').where({ PayerId: payerId }));
+      const payerName = payer?.PayerName || 'the customer';
+
+      let amountContext = '';
+      if (payer?.TotalPastDue) {
+        amountContext = `The specific overdue amount is ${payer.TotalPastDue} ${payer.Currency || ''}.`;
+      } else {
+        amountContext = `The exact amount is not available, so refer to it generally as "your outstanding balance".`;
+      }
+
+      // Calculate today's date for the AI's reference
+      const today = new Date().toISOString().split('T')[0];
+
+      const systemInstruction = `You are a professional collections agent for Vegah CollectIQ.
+              
+Your Goal: professionally remind the customer about their payment.
+Current Date: ${today}
+
+1. Start by greeting ${payerName} and clearly stating the purpose of the call (if this is the first message).
+2. ${amountContext}
+3. Keep responses concise (under 2 sentences) unless answering a question.
+4. Be empathetic but professional.
+5. IF the user asks for a human, say "I am transferring you to a specialist now."
+6. IF the customer agrees to pay later or asks for a callback, USE the 'schedule_followup' tool.
+7. NEGOTIATION RULE: Do NOT accept payment promises or follow-ups more than 30 days in the future. If they ask for "next year" or "6 months", firmly refuse and ask for a date within this month.
+8. Context: Status: ${payer?.LastOutreachStatus || 'unknown'}`;
+
+      const chat = model.startChat({
+        history: [
+          {
+            role: "user",
+            parts: [{ text: `System Instruction: ${systemInstruction}` }],
+          },
+          {
+            role: "model",
+            parts: [{ text: "Understood. I am ready to simulate the agent." }],
+          }
+        ],
+      });
+
+      const result = await chat.sendMessage(text);
+      const response = await result.response;
+
+      // Handle Function Calls
+      const functionCalls = response.functionCalls();
+      let responseText = response.text() || "";
+
+      if (functionCalls && functionCalls.length > 0) {
+        for (const call of functionCalls) {
+          if (call.name === 'schedule_followup') {
+            const { date, reason } = call.args;
+            console.log(`>>> [SHADOW-MODE] Tool Call: schedule_followup`, call.args);
+
+            // Execute DB Insert
+            try {
+              const followUpID = cds.utils.uuid();
+              await db.run(INSERT.into('my.collectiq.ScheduledFollowups').entries({
+                ID: followUpID,
+                payer_PayerId: payerId,
+                scheduledDate: date,
+                scheduledTime: new Date().toTimeString().split(' ')[0], // Local system time
+                reason: reason || "Scheduled via Shadow Mode",
+                status: 'pending'
+              }));
+              console.log(`>>> [SHADOW-MODE] Follow-up scheduled in DB for ${date}`); // Log 1
+
+              // 2. Log to Outreach History (so it appears in Payer Details & Dashboard)
+              await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+                ID: cds.utils.uuid(),
+                payer_PayerId: payerId,
+                outreachType: 'call', // Simulated call
+                outreachDate: new Date().toISOString(),
+                status: 'responded',
+                responseReceived: true,
+                responseDate: new Date().toISOString(),
+                notes: `[Shadow Mode] Follow-up scheduled: ${reason}`,
+                bodyText: `Customer agreed to pay later. Follow-up scheduled for ${date}. Reason: ${reason}`, // Visible in "Message" column
+                stageAtGeneration: payer?.Stage || 'STAGE_1' // Added stage tracking
+              }));
+
+              // 3. Update Payer Status (so Dashboard updates)
+              await db.run(UPDATE('my.collectiq.Payers').set({
+                LastOutreachStatus: 'Follow-up Scheduled',
+                lastOutreachAt: new Date().toISOString()
+              }).where({ PayerId: payerId }));
+
+              // 4. Create Transcript Analysis (so it appears in "Transcript Analysis History" tab)
+              await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+                ID: cds.utils.uuid(),
+                payer_PayerId: payerId,
+                callId: `SIM-${Date.now()}`,
+                callDate: new Date().toISOString(),
+                duration: 120, // Mock duration (2 mins)
+                transcriptAgent: "Agent: (Shadow Mode Simulation)",
+                transcriptPayer: `Customer: (Shadow Mode logic applied - ${reason})`,
+                fullTranscript: `[Shadow Mode Simulation]\nOutcome: Follow-up scheduled for ${date}.\nReason: ${reason}`,
+                callConclusion: `Follow-up scheduled: ${reason}`, // Visible in "Conclusion" column
+                paymentPromiseDate: date,
+                paymentPromiseConfirmed: true,
+                sentimentScore: 0.85, // Mock positive sentiment
+                recommendedAction: "Verify payment on scheduled date"
+              }));
+
+              // Append system confirmation to response if empty
+              if (!responseText) {
+                responseText = `(System: Follow-up scheduled for ${date})`;
+              }
+            } catch (dbErr) {
+              console.error(">>> [SHADOW-MODE] DB Error:", dbErr.message);
+              responseText += " [Error scheduling follow-up in database]";
+            }
+          }
+        }
+      }
+
+      // If the model called a function but didn't generate text (common in some modes), ensure we send something back
+      if (!responseText && functionCalls.length > 0) {
+        responseText = "I have scheduled the follow-up as requested.";
+      }
+
+      res.json({ response: responseText });
+
+    } catch (err) {
+      console.error(">>> [SHADOW-MODE ERROR]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ========== TWILIO MEDIA STREAM + DEEPGRAM STT/TTS + GEMINI ==========
+  // Real-time voice conversation: Deepgram for STT/TTS, Gemini for conversation logic
   app.ws('/collect-iq/media-stream', (ws, req) => {
     console.log(`\n>>> [MEDIA-STREAM] ========== TWILIO WEBSOCKET CONNECTED ==========`);
     console.log(`>>> [MEDIA-STREAM] Query:`, req.query);
@@ -709,23 +890,36 @@ module.exports = cds.service.impl(async function () {
       const match = req.url.match(/[?&]payerId=([^&]+)/);
       if (match) {
         payerId = match[1];
-        console.log(`>>> [MEDIA-STREAM] Fallback parsed payerId from URL: ${payerId}`);
       }
     }
+    console.log(`>>> [MEDIA-STREAM] Final PayerID: ${payerId}`);
 
-    let openaiWs = null;
-    let openaiConnecting = null;
-    const openaiQueue = [];
+    let deepgramWs = null;
+    let deepgramConnecting = null;
     let payer = null;
+    let conversationHistory = [];
+    let isProcessingResponse = false;
+    let transcriptBuffer = '';
+    let silenceTimer = null;
+    let hasGreeted = false;
+    let callStartTime = Date.now(); // Track call start time for duration calculation
 
-    // Fetch payer details once and cache so prompts always include name/amount
+    // Fetch payer details once and cache
     const loadPayer = async () => {
-      if (payer) return payer;
-      if (!payerId) return null;
+      console.log(`>>> [LOAD-PAYER] Called. Current payer cache: ${payer ? 'EXISTS' : 'NULL'}, payerId: ${payerId}`);
+      if (payer) {
+        console.log(`>>> [LOAD-PAYER] Returning cached payer: ${payer.PayerName}`);
+        return payer;
+      }
+      if (!payerId) {
+        console.log(`>>> [LOAD-PAYER] ERROR: payerId is NULL/undefined!`);
+        return null;
+      }
       try {
         const db = await cds.connect.to('db');
         payer = await db.run(SELECT.one.from('my.collectiq.Payers').where({ PayerId: payerId }));
-        console.log(`>>> [MEDIA-STREAM] Loaded payer for AI prompt: ${payer?.PayerName || 'N/A'}`);
+        console.log(`>>> [LOAD-PAYER] DB Query Result:`, JSON.stringify(payer, null, 2));
+        console.log(`>>> [MEDIA-STREAM] Loaded payer for AI prompt: ${payer?.PayerName || 'N/A'}, Amount: ${payer?.TotalPastDue || 'N/A'}`);
       } catch (err) {
         console.error(`>>> [MEDIA-STREAM] Failed loading payer:`, err.message);
       }
@@ -747,179 +941,624 @@ module.exports = cds.service.impl(async function () {
       }
     };
 
-    // Helper to send/queue to OpenAI until socket is OPEN
-    const safeSendToOpenAI = (payload) => {
-      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
-        openaiWs.send(JSON.stringify(payload));
-        return true;
+    // ===== DEEPGRAM TTS - Convert text to speech =====
+    const speakText = async (text) => {
+      if (!text || !streamSid) {
+        console.warn('>>> [DEEPGRAM-TTS] Cannot speak: missing text or streamSid');
+        return;
       }
-      // queue and will flush on open
-      openaiQueue.push(payload);
-      return false;
+      
+      console.log(`>>> [DEEPGRAM-TTS] Speaking: "${text}"`);
+      
+      try {
+        const response = await axios({
+          method: 'POST',
+          url: 'https://api.deepgram.com/v1/speak?model=aura-asteria-en&encoding=mulaw&sample_rate=8000&container=none',
+          headers: {
+            'Authorization': `Token ${process.env.DEEPGRAM_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          data: { text },
+          responseType: 'arraybuffer'
+        });
+
+        // Convert audio buffer to base64 and send to Twilio in chunks
+        const audioBuffer = Buffer.from(response.data);
+        const chunkSize = 640; // ~40ms of audio at 8kHz mulaw
+        
+        for (let i = 0; i < audioBuffer.length; i += chunkSize) {
+          const chunk = audioBuffer.slice(i, i + chunkSize);
+          const base64Chunk = chunk.toString('base64');
+          
+          safeSendToTwilio({
+            event: 'media',
+            streamSid: streamSid,
+            media: { payload: base64Chunk }
+          });
+          
+          // Small delay to prevent buffer overflow
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+        
+        console.log(`>>> [DEEPGRAM-TTS] Finished speaking (${audioBuffer.length} bytes)`);
+      } catch (err) {
+        console.error(`>>> [DEEPGRAM-TTS] Error:`, err.message);
+      }
     };
 
-    // ===== OPENAI REALTIME CONNECTION =====
-    const connectToOpenAI = async () => {
-      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) return;
-      if (openaiConnecting) return openaiConnecting;
-
-      openaiConnecting = new Promise((resolve, reject) => {
-        const openaiUrl = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17';
-        const authHeader = `Bearer ${process.env.OPENAI_API_KEY}`;
-
-        console.log(`>>> [OPENAI] Connecting to OpenAI Realtime API...`);
-
-        openaiWs = new WebSocket(openaiUrl, {
-          headers: {
-            'Authorization': authHeader,
-            'OpenAI-Beta': 'realtime=v1'
-          }
-        });
-
-        openaiWs.on('open', async () => {
-          console.log(`>>> [OPENAI] ✓ Connected to OpenAI Realtime API`);
-          // flush queued messages
-          while (openaiQueue.length && openaiWs.readyState === WebSocket.OPEN) {
-            const msg = openaiQueue.shift();
-            openaiWs.send(JSON.stringify(msg));
-          }
-
-          // Ensure payer data is present before configuring the session so the model can speak the name/amount
-          await loadPayer();
-
-          const payerName = payer?.PayerName || 'the customer';
-
-          // Fix for "amount is the amount" tautology
-          let amountContext = '';
-          if (payer?.TotalPastDue) {
-            const amount = `${payer.TotalPastDue} ${payer.Currency || ''}`.trim();
-            amountContext = `The specific overdue amount is ${amount}.`;
+    // ===== HELPER: Format amount for natural speech =====
+    const formatAmountForSpeech = (amount, currencyCode) => {
+      // Convert number to words
+      const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+                    'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 
+                    'seventeen', 'eighteen', 'nineteen'];
+      const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+      
+      const numToWords = (num) => {
+        if (num === 0) return 'zero';
+        if (num < 0) return 'negative ' + numToWords(-num);
+        
+        let words = '';
+        
+        if (Math.floor(num / 1000000) > 0) {
+          words += numToWords(Math.floor(num / 1000000)) + ' million ';
+          num %= 1000000;
+        }
+        
+        if (Math.floor(num / 1000) > 0) {
+          words += numToWords(Math.floor(num / 1000)) + ' thousand ';
+          num %= 1000;
+        }
+        
+        if (Math.floor(num / 100) > 0) {
+          words += ones[Math.floor(num / 100)] + ' hundred ';
+          num %= 100;
+        }
+        
+        if (num > 0) {
+          if (num < 20) {
+            words += ones[num];
           } else {
-            amountContext = `The exact amount is not available, so refer to it generally as "your outstanding balance".`;
-          }
-
-          const callDetails = `
-- Customer Name: ${payerName}
-- Amount Info: ${amountContext}
-- Status: ${payer?.LastOutreachStatus || 'unknown'}
-          `.trim();
-
-          // Send session configuration to OpenAI
-          const sessionConfig = {
-            type: 'session.update',
-            session: {
-              model: 'gpt-4o-realtime-preview-2024-12-17',
-              modalities: ['text', 'audio'],
-              instructions: `You are a professional collections agent for Vegah CollectIQ.
-              
-Your Goal: professionally remind the customer about their payment.
-1. Start by greeting ${payerName} and clearly stating the purpose of the call.
-2. ${amountContext}
-3. Keep responses concise (under 2 sentences) unless answering a question.
-4. Be empathetic but professional.
-5. When the conversation is concluded (e.g., they agree to pay, or refuse and say goodbye), YOU MUST use the "end_call" tool to terminate the connection.
-
-Context:
-${callDetails}`,
-              voice: 'alloy',
-              tools: [{
-                type: 'function',
-                name: 'end_call',
-                description: 'Ends the call immediately. Use this when the conversation is over.',
-                parameters: {
-                  type: 'object',
-                  properties: {},
-                  required: []
-                }
-              }],
-              tool_choice: 'auto',
-              temperature: 0.7,
-              max_response_output_tokens: 1024,
-              input_audio_format: 'g711_ulaw',
-              output_audio_format: 'g711_ulaw'
+            words += tens[Math.floor(num / 10)];
+            if (num % 10 > 0) {
+              words += ' ' + ones[num % 10];
             }
-          };
-          safeSendToOpenAI(sessionConfig);
-          console.log(`>>> [OPENAI] Session configured`);
-          resolve();
+          }
+        }
+        
+        return words.trim();
+      };
+      
+      // Currency names for speech
+      const currencyNames = {
+        'USD': 'dollars',
+        'INR': 'rupees',
+        'EUR': 'euros',
+        'GBP': 'pounds',
+        'AUD': 'Australian dollars',
+        'CAD': 'Canadian dollars',
+        'JPY': 'yen',
+        'CNY': 'yuan'
+      };
+      
+      const currencyName = currencyNames[currencyCode] || currencyCode;
+      const amountWords = numToWords(Math.floor(amount));
+      
+      return `${amountWords} ${currencyName}`;
+    };
+
+    // ===== RULE-BASED CONVERSATION AGENT (No external AI API) =====
+    // Uses pattern matching and conversation state to generate responses
+    let conversationState = 'greeting_response'; // States: greeting_response, awaiting_confirmation, awaiting_date, closing
+    
+    const generateResponse = async (userMessage) => {
+      if (isProcessingResponse) {
+        console.log('>>> [AGENT] Already processing, skipping...');
+        return null;
+      }
+      
+      isProcessingResponse = true;
+      
+      const payerName = payer?.PayerName || 'Customer';
+      const amountDue = payer?.TotalPastDue || 0;
+      const currency = payer?.Currency || 'USD';
+      // Format amount for natural speech (e.g., "eighty five thousand dollars")
+      const fullAmount = formatAmountForSpeech(amountDue, currency);
+      
+      // Normalize user message for matching
+      const msg = userMessage.toLowerCase().trim();
+      
+      console.log(`>>> [AGENT] Processing: "${userMessage}" | State: ${conversationState}`);
+      
+      // Add user message to history
+      conversationHistory.push({ role: 'user', content: userMessage });
+      
+      let response = '';
+      let action = null;
+      
+      // Pattern matching for common responses
+      const patterns = {
+        // Positive responses (yes, okay, sure, etc.) - STRICT matching
+        positive: /^(yes|yeah|yep|yup|sure|okay|ok|fine|alright|correct|right|uh-huh|mhm|go ahead|proceed)\.?$/i,
+        // Soft positive (contains positive words but might have more context)
+        softPositive: /\b(yes|yeah|yep|sure|okay|ok|fine|alright)\b/i,
+        // Negative responses (no, not now, can't, etc.) - Check these FIRST
+        negative: /\b(no|nope|not now|not right now|busy|can't|cannot|can not|don't|do not|won't|will not|later|not interested|stop|not today|right now)\b/i,
+        // Request for human
+        human: /\b(human|person|agent|representative|someone|real person|speak to|talk to|transfer|manager|supervisor)\b/i,
+        // Payment confirmation (must be clearly positive about paying)
+        paymentPositive: /\b(i will pay|i'll pay|yes.*(pay|payment)|ready to pay|want to pay|let's pay|make.*(payment|pay)|paying now|pay now|pay today)\b/i,
+        // Schedule/callback related
+        callback: /\b(call back|callback|call me|tomorrow|next week|monday|tuesday|wednesday|thursday|friday|few days|couple days|another time|different time)\b/i,
+        // Questions
+        question: /\b(what|why|how much|when|where|who|which|can you|could you|tell me|explain|what is)\b/i,
+        // Dispute/problem
+        dispute: /\b(wrong|incorrect|mistake|error|dispute|not mine|didn't order|never ordered|already paid|paid already|problem|issue)\b/i,
+        // Greeting responses
+        greeting: /\b(hello|hi|hey|good morning|good afternoon|doing well|i'm good|i am good)\b/i,
+        // Confirmation of identity
+        identity: /\b(this is|speaking|that's me|that is me|i am|yes this is)\b/i
+      };
+      
+      // Helper function to check patterns with priority
+      const matchesPattern = (pattern) => pattern.test(msg);
+      
+      // State machine logic
+      switch (conversationState) {
+        case 'greeting_response':
+          // Check in priority order: human > dispute > negative > positive
+          if (matchesPattern(patterns.human)) {
+            response = `Of course ${payerName}, I'll transfer you to a specialist right away. Please hold.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.dispute)) {
+            response = `I understand there may be a concern ${payerName}. Let me transfer you to a specialist who can help resolve this for the amount of ${fullAmount}.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.negative)) {
+            response = `I understand ${payerName}. When would be a better time to discuss your account with the balance of ${fullAmount}?`;
+            conversationState = 'awaiting_date';
+          } else if (matchesPattern(patterns.positive) || matchesPattern(patterns.softPositive) || matchesPattern(patterns.greeting) || matchesPattern(patterns.identity)) {
+            response = `Thank you ${payerName}. I'm calling about your outstanding balance of ${fullAmount}. Would you like to make a payment arrangement today?`;
+            conversationState = 'awaiting_confirmation';
+          } else {
+            // Default: assume they're listening
+            response = `${payerName}, I'm reaching out regarding your balance of ${fullAmount}. Can we discuss payment options today?`;
+            conversationState = 'awaiting_confirmation';
+          }
+          break;
+          
+        case 'awaiting_confirmation':
+          // Check in priority order: human > dispute > negative/callback > positive payment
+          if (matchesPattern(patterns.human)) {
+            response = `Absolutely ${payerName}, transferring you now. Please hold.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.dispute)) {
+            response = `I understand ${payerName}. Let me connect you with a specialist who can review your account and the ${fullAmount} balance with you.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.negative) || matchesPattern(patterns.callback)) {
+            // User said no, can't, later, etc. - offer callback
+            response = `No problem ${payerName}. When would be a good time for us to call you back about the ${fullAmount}?`;
+            conversationState = 'awaiting_date';
+          } else if (matchesPattern(patterns.paymentPositive)) {
+            // User explicitly agreed to pay
+            response = `Excellent ${payerName}! To process your payment of ${fullAmount}, I'll transfer you to our payment specialist who can assist you securely.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.question)) {
+            response = `${payerName}, the balance of ${fullAmount} is currently due on your account. Would you like to speak with a specialist for more details?`;
+            conversationState = 'awaiting_confirmation';
+          } else if (matchesPattern(patterns.positive) || matchesPattern(patterns.softPositive)) {
+            // Generic positive - offer payment assistance
+            response = `Great ${payerName}! Would you like to make a payment today, or should I schedule a callback for a more convenient time?`;
+            conversationState = 'awaiting_confirmation';
+          } else {
+            // Unclear response - ask for clarification
+            response = `${payerName}, shall I arrange a callback for a more convenient time to discuss the ${fullAmount}?`;
+            conversationState = 'awaiting_date';
+          }
+          break;
+          
+        case 'awaiting_date':
+          if (matchesPattern(patterns.human)) {
+            response = `Of course, transferring you now ${payerName}.`;
+            action = { type: 'transfer' };
+          } else if (matchesPattern(patterns.negative) && !matchesPattern(patterns.callback)) {
+            // User said no without specifying a time
+            response = `I understand ${payerName}. We'll reach out again soon about your balance of ${fullAmount}. Have a good day.`;
+            action = { type: 'end_call' };
+          } else {
+            // Try to extract a date or just schedule for tomorrow
+            let followupDate = new Date();
+            let reason = 'Customer requested callback';
+            
+            if (/tomorrow/i.test(msg)) {
+              followupDate.setDate(followupDate.getDate() + 1);
+              reason = 'Customer requested callback tomorrow';
+            } else if (/monday/i.test(msg)) {
+              const daysUntilMonday = (8 - followupDate.getDay()) % 7 || 7;
+              followupDate.setDate(followupDate.getDate() + daysUntilMonday);
+              reason = 'Customer requested callback on Monday';
+            } else if (/tuesday/i.test(msg)) {
+              const daysUntil = (9 - followupDate.getDay()) % 7 || 7;
+              followupDate.setDate(followupDate.getDate() + daysUntil);
+              reason = 'Customer requested callback on Tuesday';
+            } else if (/wednesday/i.test(msg)) {
+              const daysUntil = (10 - followupDate.getDay()) % 7 || 7;
+              followupDate.setDate(followupDate.getDate() + daysUntil);
+              reason = 'Customer requested callback on Wednesday';
+            } else if (/thursday/i.test(msg)) {
+              const daysUntil = (11 - followupDate.getDay()) % 7 || 7;
+              followupDate.setDate(followupDate.getDate() + daysUntil);
+              reason = 'Customer requested callback on Thursday';
+            } else if (/friday/i.test(msg)) {
+              const daysUntil = (12 - followupDate.getDay()) % 7 || 7;
+              followupDate.setDate(followupDate.getDate() + daysUntil);
+              reason = 'Customer requested callback on Friday';
+            } else if (/next week/i.test(msg)) {
+              followupDate.setDate(followupDate.getDate() + 7);
+              reason = 'Customer requested callback next week';
+            } else if (/few days|couple days|couple of days/i.test(msg)) {
+              followupDate.setDate(followupDate.getDate() + 3);
+              reason = 'Customer requested callback in a few days';
+            } else {
+              // Default to tomorrow
+              followupDate.setDate(followupDate.getDate() + 1);
+              reason = 'Customer requested callback';
+            }
+            
+            const dateStr = followupDate.toISOString().split('T')[0];
+            response = `Perfect ${payerName}, I've scheduled a callback for ${followupDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} regarding your ${fullAmount} balance. Have a great day!`;
+            action = { type: 'followup', date: dateStr, reason: reason };
+            conversationState = 'closing';
+          }
+          break;
+        case 'closing':
+          response = `Thank you for your time ${payerName}. Goodbye!`;
+          action = { type: 'end_call' };
+          break;
+          
+        default:
+          response = `${payerName}, would you like to speak with a specialist about your account?`;
+          conversationState = 'awaiting_confirmation';
+      }
+      
+      console.log(`>>> [AGENT] Response: "${response}" | Action: ${action?.type || 'none'} | New State: ${conversationState}`);
+      
+      // Add response to history
+      conversationHistory.push({ role: 'assistant', content: response });
+      
+      isProcessingResponse = false;
+      return { text: response, action: action };
+    };
+
+    // ===== Handle tool actions with full backend reporting =====
+    const handleToolAction = async (action) => {
+      if (!action) return;
+      
+      console.log(`>>> [TOOL] Executing action:`, action);
+      const db = await cds.connect.to('db');
+      const callDuration = Math.floor((Date.now() - callStartTime) / 1000) || 60;
+      const fullTranscript = conversationHistory.map(m => `${m.role === 'user' ? 'Customer' : 'Agent'}: ${m.content}`).join('\n');
+      
+      switch (action.type) {
+        case 'transfer':
+          console.log(`>>> [TOOL] Transferring call to ${process.env.TRANSFER_PHONE_NUMBER}...`);
+          
+          // Log transfer to backend
+          try {
+            // 1. Log to OutreachHistory
+            await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              outreachType: 'call',
+              outreachDate: new Date().toISOString(),
+              status: 'transferred',
+              responseReceived: true,
+              responseDate: new Date().toISOString(),
+              notes: `[Voice Agent] Call transferred to human agent`,
+              bodyText: `Customer requested transfer to specialist.`,
+              stageAtGeneration: payer?.Stage || 'STAGE_1'
+            }));
+            
+            // 2. Update Payer status
+            await db.run(UPDATE('my.collectiq.Payers').set({
+              LastOutreachStatus: 'Transferred to Agent',
+              lastOutreachAt: new Date().toISOString()
+            }).where({ PayerId: payerId }));
+            
+            // 3. Log CallTranscript
+            await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              callId: callSid || `VOICE-${Date.now()}`,
+              callDate: new Date().toISOString(),
+              duration: callDuration,
+              transcriptAgent: "Agent: (Deepgram Voice Call)",
+              transcriptPayer: "Customer: Requested transfer",
+              fullTranscript: fullTranscript || "[Call transferred to human]",
+              callConclusion: "Transferred to human agent",
+              sentimentScore: 0.5,
+              recommendedAction: "Follow up after human agent call"
+            }));
+            
+            console.log(`>>> [TOOL] Transfer logged to backend`);
+          } catch (err) {
+            console.error(`>>> [TOOL] DB Error logging transfer:`, err.message);
+          }
+          
+          // Execute Twilio transfer
+          if (callSid) {
+            const transferTwiml = `<Response>
+              <Say voice="alice">Please hold while I connect you to a specialist.</Say>
+              <Dial>${process.env.TRANSFER_PHONE_NUMBER}</Dial>
+            </Response>`;
+            
+            try {
+              await twilioClient.calls(callSid).update({ twiml: transferTwiml });
+              console.log(`>>> [TOOL] Call transferred successfully`);
+            } catch (err) {
+              console.error(`>>> [TOOL] Transfer error:`, err.message);
+            }
+          }
+          if (ws.readyState === WebSocket.OPEN) ws.close();
+          break;
+          
+        case 'end_call':
+          console.log(`>>> [TOOL] Ending call...`);
+          
+          // Log call completion to backend
+          try {
+            // 1. Log to OutreachHistory
+            await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              outreachType: 'call',
+              outreachDate: new Date().toISOString(),
+              status: 'completed',
+              responseReceived: true,
+              responseDate: new Date().toISOString(),
+              notes: `[Voice Agent] Call completed successfully`,
+              bodyText: `AI voice call completed. Customer engaged with agent.`,
+              stageAtGeneration: payer?.Stage || 'STAGE_1'
+            }));
+            
+            // 2. Update Payer status
+            await db.run(UPDATE('my.collectiq.Payers').set({
+              LastOutreachStatus: 'Call Completed',
+              lastOutreachAt: new Date().toISOString()
+            }).where({ PayerId: payerId }));
+            
+            // 3. Log CallTranscript
+            await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              callId: callSid || `VOICE-${Date.now()}`,
+              callDate: new Date().toISOString(),
+              duration: callDuration,
+              transcriptAgent: "Agent: (Deepgram Voice Call)",
+              transcriptPayer: "Customer: (Voice Call)",
+              fullTranscript: fullTranscript || "[Call ended normally]",
+              callConclusion: "Call completed successfully",
+              sentimentScore: 0.7,
+              recommendedAction: "Schedule follow-up if needed"
+            }));
+            
+            console.log(`>>> [TOOL] Call end logged to backend`);
+          } catch (err) {
+            console.error(`>>> [TOOL] DB Error logging call end:`, err.message);
+          }
+          
+          if (ws.readyState === WebSocket.OPEN) ws.close();
+          break;
+          
+        case 'followup':
+          console.log(`>>> [TOOL] Scheduling followup for ${action.date}: ${action.reason}`);
+          try {
+            // 1. Insert scheduled followup
+            const followupId = cds.utils.uuid();
+            await db.run(INSERT.into('my.collectiq.ScheduledFollowups').entries({
+              ID: followupId,
+              payer_PayerId: payerId,
+              scheduledDate: action.date,
+              scheduledTime: new Date().toTimeString().split(' ')[0],
+              reason: action.reason || "Scheduled via Voice Agent",
+              status: 'pending'
+            }));
+            console.log(`>>> [TOOL] ScheduledFollowup created: ${followupId}`);
+            
+            // 2. Log to OutreachHistory
+            await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              outreachType: 'call',
+              outreachDate: new Date().toISOString(),
+              status: 'responded',
+              responseReceived: true,
+              responseDate: new Date().toISOString(),
+              notes: `[Voice Agent] Follow-up scheduled for ${action.date}: ${action.reason}`,
+              bodyText: `Customer agreed to follow-up on ${action.date}. Reason: ${action.reason}`,
+              stageAtGeneration: payer?.Stage || 'STAGE_1'
+            }));
+            console.log(`>>> [TOOL] OutreachHistory logged`);
+            
+            // 3. Update Payer status
+            await db.run(UPDATE('my.collectiq.Payers').set({
+              LastOutreachStatus: 'Follow-up Scheduled',
+              lastOutreachAt: new Date().toISOString()
+            }).where({ PayerId: payerId }));
+            console.log(`>>> [TOOL] Payer status updated`);
+            
+            // 4. Create CallTranscript
+            await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+              ID: cds.utils.uuid(),
+              payer_PayerId: payerId,
+              callId: callSid || `VOICE-${Date.now()}`,
+              callDate: new Date().toISOString(),
+              duration: callDuration,
+              transcriptAgent: "Agent: (Deepgram Voice Call)",
+              transcriptPayer: `Customer: ${action.reason}`,
+              fullTranscript: fullTranscript,
+              callConclusion: `Follow-up scheduled: ${action.reason}`,
+              paymentPromiseDate: action.date,
+              paymentPromiseConfirmed: true,
+              sentimentScore: 0.85,
+              recommendedAction: "Verify payment on scheduled date"
+            }));
+            console.log(`>>> [TOOL] CallTranscript created`);
+            
+            console.log(`>>> [TOOL] Follow-up scheduled successfully - ALL BACKEND RECORDS CREATED`);
+          } catch (err) {
+            console.error(`>>> [TOOL] DB Error:`, err.message);
+          }
+          break;
+      }
+    };
+
+    // ===== Process transcript and generate response =====
+    const processTranscript = async (transcript) => {
+      if (!transcript || transcript.trim().length < 2) return;
+      
+      console.log(`>>> [TRANSCRIPT] Processing: "${transcript}"`);
+      
+      const response = await generateResponse(transcript);
+      if (response && response.text) {
+        await speakText(response.text);
+        
+        if (response.action) {
+          // Small delay before executing action
+          setTimeout(() => handleToolAction(response.action), 1000);
+        }
+      }
+    };
+
+    // ===== DEEPGRAM STT CONNECTION =====
+    const connectToDeepgram = async () => {
+      if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
+        console.log(`>>> [DEEPGRAM-STT] Already connected`);
+        return;
+      }
+      if (deepgramConnecting) {
+        console.log(`>>> [DEEPGRAM-STT] Connection in progress...`);
+        return deepgramConnecting;
+      }
+
+      deepgramConnecting = new Promise((resolve, reject) => {
+        const apiKey = process.env.DEEPGRAM_API_KEY;
+        
+        console.log(`>>> [DEEPGRAM-STT] API Key available: ${apiKey ? 'YES' : 'NO - MISSING!'}`);
+        
+        if (!apiKey) {
+          console.error(`>>> [DEEPGRAM-STT] CRITICAL: No DEEPGRAM_API_KEY!`);
+          reject(new Error('DEEPGRAM_API_KEY not configured'));
+          return;
+        }
+
+        // Deepgram live transcription WebSocket URL
+        // Using mulaw encoding to match Twilio's audio format
+        const deepgramUrl = `wss://api.deepgram.com/v1/listen?encoding=mulaw&sample_rate=8000&channels=1&model=nova-2&smart_format=true&interim_results=true&endpointing=300&utterance_end_ms=1000`;
+        
+        console.log(`>>> [DEEPGRAM-STT] Connecting...`);
+
+        deepgramWs = new WebSocket(deepgramUrl, {
+          headers: {
+            'Authorization': `Token ${apiKey}`
+          }
         });
 
-        openaiWs.on('error', (error) => {
-          console.error(`>>> [OPENAI] Connection Error:`, error.message);
+        deepgramWs.on('open', async () => {
+          console.log(`>>> [DEEPGRAM-STT] Connected!`);
+          resolve();
+          
+          // Send initial greeting after connection
+          if (!hasGreeted) {
+            hasGreeted = true;
+            await loadPayer();
+            
+            // Debug: Log what payer data we have
+            console.log(`>>> [GREETING] Payer object:`, JSON.stringify(payer, null, 2));
+            
+            const payerName = payer?.PayerName || 'Customer';
+            const amountDue = payer?.TotalPastDue || 0;
+            const currency = payer?.Currency || 'USD';
+            
+            // Format amount for natural speech
+            const fullAmount = formatAmountForSpeech(amountDue, currency);
+            
+            console.log(`>>> [GREETING] Using: Name="${payerName}", Amount="${fullAmount}"`);
+            
+            const greeting = `Hello ${payerName}, this is Vegah Collect I Q. You have an outstanding balance of ${fullAmount}. Is this a good time to discuss your account?`;
+            
+            // Add greeting to conversation history
+            conversationHistory.push({ role: 'assistant', content: greeting });
+            
+            console.log(`>>> [DEEPGRAM-STT] Sending greeting: "${greeting}"`);
+            await speakText(greeting);
+          }
+        });
+
+        deepgramWs.on('error', (error) => {
+          console.error(`>>> [DEEPGRAM-STT] Error:`, error.message);
           reject(error);
         });
 
-        openaiWs.on('close', () => {
-          console.log(`>>> [OPENAI] Connection closed`);
-          openaiConnecting = null;
-          openaiWs = null;
+        deepgramWs.on('close', () => {
+          console.log(`>>> [DEEPGRAM-STT] Connection closed`);
+          deepgramConnecting = null;
+          deepgramWs = null;
         });
 
-        // Handle messages from OpenAI
-        openaiWs.on('message', (data) => {
+        // Handle transcription results from Deepgram
+        deepgramWs.on('message', async (data) => {
           try {
             const message = JSON.parse(data.toString());
-            console.log(`>>> [OPENAI] Event: ${message.type}`);
-
-            switch (message.type) {
-              case 'response.audio.delta':
-                // Audio response from OpenAI - send to Twilio
-                if (!message.delta) break;
-                if (ws.readyState !== WebSocket.OPEN) {
-                  console.warn('>>> [OPENAI] Dropping audio delta because Twilio WS not open');
-                  break;
-                }
-                if (!streamSid) {
-                  console.warn('>>> [OPENAI] Dropping audio delta because streamSid not set');
-                  break;
-                }
-                console.log(`>>> [OPENAI] Audio delta (${message.delta.length} bytes base64)`);
-                // message.delta is already base64-encoded g711_ulaw audio; forward directly to Twilio
-                safeSendToTwilio({
-                  event: 'media',
-                  streamSid: streamSid,
-                  media: { payload: message.delta }
-                });
-                break;
-
-              case 'response.text.delta':
-                console.log(`>>> [OPENAI] AI Response: ${message.delta}`);
-                break;
-
-              case 'response.done':
-                console.log(`>>> [OPENAI] Response completed`);
-                if (message.response && message.response.output) {
-                  message.response.output.forEach(item => {
-                    if (item.type === 'function_call' && item.name === 'end_call') {
-                      console.log('>>> [OPENAI] Tool call detected: end_call. Terminating connection.');
-                      if (ws.readyState === WebSocket.OPEN) {
-                        ws.close();
-                      }
+            
+            if (message.type === 'Results' && message.channel?.alternatives?.[0]) {
+              const transcript = message.channel.alternatives[0].transcript;
+              const isFinal = message.is_final;
+              
+              if (transcript && transcript.trim()) {
+                console.log(`>>> [DEEPGRAM-STT] ${isFinal ? 'FINAL' : 'interim'}: "${transcript}"`);
+                
+                if (isFinal) {
+                  // Accumulate final transcripts
+                  transcriptBuffer += ' ' + transcript;
+                  
+                  // Clear any existing timer
+                  if (silenceTimer) clearTimeout(silenceTimer);
+                  
+                  // Set timer to process after silence
+                  silenceTimer = setTimeout(async () => {
+                    const fullTranscript = transcriptBuffer.trim();
+                    transcriptBuffer = '';
+                    
+                    if (fullTranscript.length > 2) {
+                      await processTranscript(fullTranscript);
                     }
-                  });
+                  }, 800); // 800ms of silence triggers response
                 }
-                break;
-
-              case 'error':
-                console.error(`>>> [OPENAI] Error:`, message.error);
-                break;
-
-              default:
-                // Silently ignore other message types
-                break;
+              }
+            } else if (message.type === 'UtteranceEnd') {
+              // Utterance ended - process any buffered transcript immediately
+              console.log(`>>> [DEEPGRAM-STT] Utterance end detected`);
+              if (silenceTimer) clearTimeout(silenceTimer);
+              
+              const fullTranscript = transcriptBuffer.trim();
+              transcriptBuffer = '';
+              
+              if (fullTranscript.length > 2 && !isProcessingResponse) {
+                await processTranscript(fullTranscript);
+              }
             }
           } catch (err) {
-            console.error(`>>> [OPENAI] Message parse error:`, err.message);
+            console.error(`>>> [DEEPGRAM-STT] Message parse error:`, err.message);
           }
         });
       });
 
-      return openaiConnecting.finally(() => {
-        openaiConnecting = null;
+      return deepgramConnecting.finally(() => {
+        deepgramConnecting = null;
       });
     };
 
-    // Preload payer info so we can prompt immediately even if Twilio skips "connected"
+    // Preload payer info
     (async () => {
       try {
         if (payerId) {
@@ -938,158 +1577,96 @@ ${callDetails}`,
         const data = JSON.parse(message);
         const event = data.event;
 
-        console.log(`>>> [TWILIO] Event: ${event}`);
-
-        let payerName = 'the customer';
-        let amountText = 'the outstanding balance';
-        let voiceScript = '';
+        // Only log non-media events to reduce noise
+        if (event !== 'media') {
+          console.log(`>>> [TWILIO] Event: ${event}`);
+        }
 
         switch (event) {
           case 'connected':
             console.log(`>>> [TWILIO] Connected event received`);
-            console.log(`>>> [TWILIO] Stream SID: ${data.streamSid}`);
             streamSid = data.streamSid;
             callSid = data.callSid;
             payerId = req.query.payerId || payerId;
-            console.log(`>>> [TWILIO] PayerId: ${payerId}`);
 
             await loadPayer();
-            payerName = payer?.PayerName || 'the customer';
-            amountText = payer?.TotalPastDue
-              ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
-              : 'the outstanding balance';
-            voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
-
-            // Connect to OpenAI (idempotent safeguard)
-            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+            
+            // Connect to Deepgram (will send greeting)
+            if (!deepgramWs || deepgramWs.readyState !== WebSocket.OPEN) {
               try {
-                await connectToOpenAI();
-                console.log(`>>> [TWILIO] OpenAI connection established (connected event)`);
-                // Kick off conversation
-                const initialGreeting = {
-                  type: 'response.create',
-                  response: {
-                    modalities: ['audio', 'text'],
-                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
-                  }
-                };
-                safeSendToOpenAI(initialGreeting);
-                const startText = {
-                  type: 'input_text',
-                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
-                };
-                safeSendToOpenAI(startText);
+                await connectToDeepgram();
+                console.log(`>>> [TWILIO] Deepgram connected`);
               } catch (err) {
-                console.error(`>>> [TWILIO] Failed to connect to OpenAI:`, err.message);
-                ws.send(JSON.stringify({
-                  event: 'media',
-                  streamSid: streamSid,
-                  media: { payload: 'QVVEJg==' }
-                }));
+                console.error(`>>> [TWILIO] Failed to connect to Deepgram:`, err.message);
               }
             }
             break;
 
           case 'start':
             console.log(`>>> [TWILIO] Media stream started`);
-            console.log(`>>> [TWILIO] Media Format:`, data.mediaFormat);
-            // Capture streamSid/callSid from start event too (some regions skip "connected")
+            console.log(`>>> [TWILIO] Start data:`, JSON.stringify(data.start, null, 2));
             streamSid = streamSid || data.streamSid;
-            callSid = callSid || data.callSid;
+            callSid = callSid || (data.start && data.start.callSid) || data.callSid;
+            
+            // Extract payerId from customParameters (Twilio passes it here)
+            if (data.start && data.start.customParameters) {
+              payerId = payerId || data.start.customParameters.payerId;
+              console.log(`>>> [TWILIO] PayerId from customParameters: ${payerId}`);
+            }
 
             await loadPayer();
-            payerName = payer?.PayerName || 'the customer';
-            amountText = payer?.TotalPastDue
-              ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
-              : 'the outstanding balance';
-            voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
-
-            // Ensure OpenAI is connected even if "connected" was skipped
-            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+            
+            // Ensure Deepgram is connected
+            if (!deepgramWs || deepgramWs.readyState !== WebSocket.OPEN) {
               try {
-                await connectToOpenAI();
-                console.log(`>>> [TWILIO] OpenAI connection established (start event)`);
-                const initialGreeting = {
-                  type: 'response.create',
-                  response: {
-                    modalities: ['audio', 'text'],
-                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
-                  }
-                };
-                safeSendToOpenAI(initialGreeting);
-                const startText = {
-                  type: 'input_text',
-                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
-                };
-                safeSendToOpenAI(startText);
+                await connectToDeepgram();
+                console.log(`>>> [TWILIO] Deepgram connection established (start event)`);
               } catch (err) {
-                console.error(`>>> [TWILIO] Failed to connect to OpenAI (start event):`, err.message);
+                console.error(`>>> [TWILIO] Failed to connect to Deepgram:`, err.message);
               }
             }
             break;
 
           case 'media':
-            // Audio from Twilio - send to OpenAI
-            // If OpenAI not yet connected (e.g., missing connected/start), connect now lazily
-            if (!openaiWs || openaiWs.readyState !== WebSocket.OPEN) {
+            // Audio from Twilio - send to Deepgram for transcription
+            if (!deepgramWs || deepgramWs.readyState !== WebSocket.OPEN) {
+              // Lazy connect on first media event
               try {
-                await connectToOpenAI();
-                console.log(`>>> [TWILIO] OpenAI connection established (lazy on media)`);
-                await loadPayer();
-                payerName = payer?.PayerName || 'the customer';
-                amountText = payer?.TotalPastDue
-                  ? `${payer.TotalPastDue} ${payer.Currency || ''}`.trim()
-                  : 'the outstanding balance';
-                voiceScript = stage3Template(payerName, payer?.TotalPastDue || amountText, payer?.Currency || '').body;
-                const initialGreeting = {
-                  type: 'response.create',
-                  response: {
-                    modalities: ['audio', 'text'],
-                    instructions: `You are Vegah CollectIQ calling ${payerName}. Open warmly, clearly state the overdue amount of ${amountText}, and ask if now is a good time to talk. Use this phrasing as a base: ${voiceScript}`
-                  }
-                };
-                safeSendToOpenAI(initialGreeting);
-                const startText = {
-                  type: 'input_text',
-                  text: `Start speaking now with a brief greeting to ${payerName} about the overdue balance of ${amountText}. Include the name and amount in the first sentence.`
-                };
-                safeSendToOpenAI(startText);
+                await connectToDeepgram();
+                console.log(`>>> [TWILIO] Deepgram connected (lazy on media)`);
               } catch (err) {
-                console.error(`>>> [TWILIO] Failed to connect to OpenAI (media event):`, err.message);
+                console.error(`>>> [TWILIO] Failed to connect to Deepgram:`, err.message);
+                return;
               }
             }
 
-            if (openaiWs && openaiWs.readyState === WebSocket.OPEN && data.media?.payload) {
-              const audioData = {
-                type: 'input_audio_buffer.append',
-                audio: data.media.payload
-              };
-              openaiWs.send(JSON.stringify(audioData));
+            // Forward audio to Deepgram (convert from base64)
+            if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN && data.media?.payload) {
+              const audioBuffer = Buffer.from(data.media.payload, 'base64');
+              deepgramWs.send(audioBuffer);
             }
             break;
 
           case 'dtmf':
-            // Ignore DTMF for now; could be used later
             console.log(`>>> [TWILIO] DTMF detected (ignored)`);
             break;
 
           case 'stop':
             console.log(`>>> [TWILIO] Media stream stopped`);
 
-            // Close OpenAI connection
-            if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
-              openaiWs.close();
-
-              // If streamSid still missing, stash from mediaFormat if present
-              if (!streamSid && data.mediaFormat?.streamSid) {
-                streamSid = data.mediaFormat.streamSid;
-              }
-
+            // Close Deepgram connection
+            if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
+              // Send close signal to Deepgram
+              deepgramWs.send(JSON.stringify({ type: 'CloseStream' }));
+              deepgramWs.close();
             }
 
             // Update database with call completion
             try {
               const db = await cds.connect.to('db');
+              const callDuration = Math.floor((Date.now() - callStartTime) / 1000) || 60;
+              const fullTranscript = conversationHistory.map(m => `${m.role === 'user' ? 'Customer' : 'Agent'}: ${m.content}`).join('\n');
+              
               await db.run(
                 UPDATE(Payers)
                   .set({
@@ -1098,6 +1675,41 @@ ${callDetails}`,
                   })
                   .where({ PayerId: payerId })
               );
+              
+              // Log OutreachHistory entry (always)
+              await db.run(INSERT.into('my.collectiq.OutreachHistory').entries({
+                ID: cds.utils.uuid(),
+                payer_PayerId: payerId,
+                outreachType: 'call',
+                outreachDate: new Date().toISOString(),
+                status: 'delivered',
+                responseReceived: conversationHistory.length > 1,
+                responseDate: new Date().toISOString(),
+                notes: `[Voice Agent] Call ended after ${callDuration} seconds`,
+                bodyText: fullTranscript || 'Call ended',
+                stageAtGeneration: payer?.Stage || 'STAGE_3'
+              }));
+              console.log(`>>> [TWILIO] OutreachHistory logged for stop event`);
+              
+              // Log default transcript if no specific action was taken
+              const existing = await db.run(SELECT.one.from('my.collectiq.CallTranscripts').where({ callId: callSid }));
+              if (!existing && callSid) {
+                await db.run(INSERT.into('my.collectiq.CallTranscripts').entries({
+                  ID: cds.utils.uuid(),
+                  payer_PayerId: payerId,
+                  callId: callSid,
+                  callDate: new Date().toISOString(),
+                  duration: callDuration,
+                  transcriptAgent: "Agent: (Deepgram Voice Call)",
+                  transcriptPayer: "Customer: (Voice Call)",
+                  fullTranscript: fullTranscript || "[Call ended without conversation]",
+                  callConclusion: conversationHistory.length > 1 ? "Call completed with conversation" : "Call ended early",
+                  sentimentScore: 0.5,
+                  recommendedAction: "Review call"
+                }));
+                console.log(`>>> [TWILIO] CallTranscript logged for stop event`);
+              }
+              
               console.log(`>>> [TWILIO] Call completed and database updated`);
             } catch (err) {
               console.error(`>>> [TWILIO] Error updating DB:`, err.message);
@@ -1114,15 +1726,15 @@ ${callDetails}`,
 
     ws.on('error', (error) => {
       console.error(`>>> [TWILIO] WebSocket Error:`, error.message);
-      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
-        openaiWs.close();
+      if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
+        deepgramWs.close();
       }
     });
 
     ws.on('close', () => {
       console.log(`>>> [TWILIO] ========== WEBSOCKET CLOSED ==========`);
-      if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
-        openaiWs.close();
+      if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
+        deepgramWs.close();
       }
     });
   });

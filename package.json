@@ -34,6 +34,7 @@
     "@cap-js/sqlite": "^2.1.2",
     "@sap/cds-dk": "^9.6.0",
     "@sap/ux-ui5-tooling": "1",
+    "better-sqlite3": "^12.6.2",
     "mbt": "^1.2.34",
     "rimraf": "^5.0.5"
   },
